@@ -129,11 +129,21 @@ export default function TaskModal({ task, onSave, onClose }) {
             <label htmlFor="task-title">Title</label>
             <input id="task-title" className="form-input" value={form.title} onChange={set('title')}
               placeholder="What needs to be done?" autoFocus maxLength={200} required />
+            {form.title.length > 0 && (
+              <span className={`char-counter ${form.title.length > 180 ? 'warn' : ''}`}>
+                {form.title.length}/200
+              </span>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="task-desc">Description</label>
             <textarea id="task-desc" className="form-textarea" value={form.description}
               onChange={set('description')} placeholder="Add details..." maxLength={2000} />
+            {form.description.length > 0 && (
+              <span className={`char-counter ${form.description.length > 1800 ? 'warn' : ''}`}>
+                {form.description.length}/2000
+              </span>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="task-priority">Priority</label>

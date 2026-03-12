@@ -3,6 +3,13 @@ import db from '../db.js';
 
 const router = Router();
 
+/** Helper: log an activity event */
+function logActivity(taskId, action, details = '') {
+  try {
+    db.prepare('INSERT INTO activity_log (task_id, action, details) VALUES (?, ?, ?)').run(taskId, action, details);
+  } catch { /* non-critical */ }
+}
+
 // --- Validation helpers ---
 const VALID_STATUSES = ['todo', 'inprogress', 'done'];
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
@@ -164,6 +171,7 @@ router.post('/', (req, res) => {
     );
 
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
+    logActivity(task.id, 'created', `Created task "${task.title}"`);
     res.status(201).json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -201,6 +209,7 @@ router.put('/:id', (req, res) => {
     );
 
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    logActivity(task.id, 'updated', `Updated task "${task.title}"`);
     res.json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -228,7 +237,54 @@ router.patch('/:id/move', (req, res) => {
     `).run(status, position ?? 0, completedAt, req.params.id);
 
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const action = task.status === 'done' && existing.status !== 'done' ? 'completed' : 'moved';
+    logActivity(task.id, action, `${action === 'completed' ? 'Completed' : 'Moved'} task "${task.title}" to ${status}`);
     res.json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH batch operations
+router.patch('/batch', (req, res) => {
+  try {
+    const { ids, action, value } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids array is required' });
+    }
+    if (ids.length > 50) {
+      return res.status(400).json({ error: 'Maximum 50 tasks per batch' });
+    }
+    if (!action) {
+      return res.status(400).json({ error: 'action is required' });
+    }
+
+    const batchRun = db.transaction(() => {
+      let affected = 0;
+      for (const id of ids) {
+        const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+        if (!task) continue;
+
+        if (action === 'move' && VALID_STATUSES.includes(value)) {
+          const completedAt = (value === 'done' && task.status !== 'done') ? new Date().toISOString() : (value !== 'done' ? null : task.completed_at);
+          db.prepare('UPDATE tasks SET status=?, completed_at=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(value, completedAt, id);
+          logActivity(id, value === 'done' ? 'completed' : 'moved', `Batch moved "${task.title}" to ${value}`);
+          affected++;
+        } else if (action === 'priority' && VALID_PRIORITIES.includes(value)) {
+          db.prepare('UPDATE tasks SET priority=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(value, id);
+          logActivity(id, 'updated', `Batch changed "${task.title}" priority to ${value}`);
+          affected++;
+        } else if (action === 'delete') {
+          logActivity(id, 'deleted', `Deleted task "${task.title}"`);
+          db.prepare('DELETE FROM tasks WHERE id=?').run(id);
+          affected++;
+        }
+      }
+      return affected;
+    });
+
+    const affected = batchRun();
+    res.json({ success: true, affected });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -237,8 +293,10 @@ router.patch('/:id/move', (req, res) => {
 // DELETE task
 router.delete('/:id', (req, res) => {
   try {
-    const result = db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
-    if (result.changes === 0) return res.status(404).json({ error: 'Task not found' });
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    logActivity(req.params.id, 'deleted', `Deleted task "${task.title}"`);
+    db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

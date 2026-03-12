@@ -307,7 +307,7 @@ export default function App() {
         </div>
 
         {view === 'board' ? (
-          <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} />
+          <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} />
         ) : (
           <Dashboard refreshKey={refreshKey} />
         )}

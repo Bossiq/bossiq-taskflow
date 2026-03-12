@@ -17,7 +17,10 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Due Dates** — Date picker with smart display (Today, Tomorrow, Xd left) and overdue highlighting
 - **Multi-Project Support** — Create and switch between projects with color-coded sidebar
 - **Task Sorting** — Sort by priority, due date, newest, oldest, or alphabetically
-- **Statistics Dashboard** — Completion rates, priority distribution charts, overdue warnings, recent activity
+- **Task Filtering** — Priority filter chips and label dropdown, combinable with sorting
+- **Batch Actions** — Select multiple tasks → bulk move, delete, or reprioritize
+- **Statistics Dashboard** — Donut chart, priority bars, overdue warnings, productivity streak
+- **Activity Log** — Tracks task lifecycle (created, updated, moved, completed, deleted)
 - **Dark/Light Theme** — Toggle with persistent localStorage preference
 - **Search** — Debounced full-text search across all tasks
 - **CSV Export** — Export all tasks to downloadable CSV file
@@ -131,6 +134,9 @@ taskflow/
 | `PATCH` | `/api/tasks/:taskId/subtasks/:id/toggle` | Toggle subtask completion |
 | `PUT` | `/api/tasks/:taskId/subtasks/:id` | Update subtask title |
 | `DELETE` | `/api/tasks/:taskId/subtasks/:id` | Delete subtask |
+| `PATCH` | `/api/tasks/batch` | Bulk move, delete, or reprioritize tasks |
+| `GET` | `/api/activity` | Recent activity feed |
+| `GET` | `/api/activity/streak` | Productivity streak (consecutive days) |
 | `GET` | `/api/projects` | List projects (with task counts) |
 | `POST` | `/api/projects` | Create project |
 | `PUT` | `/api/projects/:id` | Update project |

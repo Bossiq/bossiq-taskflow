@@ -10,6 +10,13 @@ const router = Router({ mergeParams: true });
 
 const MAX_TITLE_LEN = 200;
 
+/** Helper: log an activity event */
+function logActivity(taskId, action, details = '') {
+  try {
+    db.prepare('INSERT INTO activity_log (task_id, action, details) VALUES (?, ?, ?)').run(taskId, action, details);
+  } catch { /* non-critical */ }
+}
+
 // GET subtasks for a task
 router.get('/', (req, res) => {
   try {
@@ -40,6 +47,7 @@ router.post('/', (req, res) => {
     ).run(req.params.taskId, title.trim(), position);
 
     const subtask = db.prepare('SELECT * FROM subtasks WHERE id = ?').get(result.lastInsertRowid);
+    logActivity(req.params.taskId, 'subtask_added', `Added subtask "${subtask.title}"`);
     res.status(201).json(subtask);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -56,6 +64,9 @@ router.patch('/:subtaskId/toggle', (req, res) => {
       .run(existing.completed ? 0 : 1, req.params.subtaskId);
 
     const updated = db.prepare('SELECT * FROM subtasks WHERE id = ?').get(req.params.subtaskId);
+    if (updated.completed) {
+      logActivity(req.params.taskId, 'subtask_completed', `Completed subtask "${updated.title}"`);
+    }
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });

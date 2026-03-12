@@ -123,7 +123,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
           {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
         <div className="sidebar-shortcut">
-          Press <kbd>N</kbd> for new task
+          <kbd>N</kbd> new · <kbd>/</kbd> search · <kbd>D</kbd> dashboard
         </div>
       </div>
     </div>

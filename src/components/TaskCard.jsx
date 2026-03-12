@@ -2,8 +2,6 @@ import React from 'react';
 
 /**
  * Formats a date string into relative time (e.g., "2h ago", "3d ago").
- * @param {string} dateStr - ISO date string
- * @returns {string} Relative time string
  */
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -18,11 +16,6 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-/**
- * Checks if a due date is in the past.
- * @param {string} dueDate - ISO date string (YYYY-MM-DD)
- * @returns {boolean}
- */
 function isOverdue(dueDate) {
   if (!dueDate) return false;
   const today = new Date();
@@ -30,11 +23,6 @@ function isOverdue(dueDate) {
   return new Date(dueDate) < today;
 }
 
-/**
- * Formats a due date for display.
- * @param {string} dueDate - ISO date string (YYYY-MM-DD)
- * @returns {string}
- */
 function formatDueDate(dueDate) {
   if (!dueDate) return '';
   const date = new Date(dueDate + 'T00:00:00');
@@ -54,23 +42,38 @@ function formatDueDate(dueDate) {
 }
 
 /**
- * TaskCard — Displays an individual task with drag-and-drop support.
- *
- * @param {{ task: object, onEdit: function, onDelete: function }} props
+ * TaskCard — Displays an individual task with drag-and-drop and batch selection support.
  */
-export default function TaskCard({ task, onEdit, onDelete }) {
+export default function TaskCard({ task, onEdit, onDelete, batchMode, selected, onToggleSelect }) {
   const overdue = task.status !== 'done' && isOverdue(task.due_date);
+
+  const handleClick = () => {
+    if (batchMode) {
+      onToggleSelect?.(task.id);
+    }
+  };
 
   return (
     <div
-      className={`task-card ${overdue ? 'task-card-overdue' : ''}`}
-      draggable
+      className={`task-card ${overdue ? 'task-card-overdue' : ''} ${selected ? 'task-card-selected' : ''}`}
+      draggable={!batchMode}
+      onClick={handleClick}
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', JSON.stringify(task));
         e.currentTarget.classList.add('dragging');
       }}
       onDragEnd={(e) => e.currentTarget.classList.remove('dragging')}
     >
+      {batchMode && (
+        <div className="task-card-checkbox">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggleSelect?.(task.id)}
+            aria-label={`Select "${task.title}"`}
+          />
+        </div>
+      )}
       <div className="task-card-header">
         <span className="task-card-title">{task.title}</span>
         <span className={`badge ${task.priority}`}>{task.priority}</span>
@@ -106,24 +109,12 @@ export default function TaskCard({ task, onEdit, onDelete }) {
             {timeAgo(task.created_at)}
           </span>
         </div>
-        <div className="task-card-actions">
-          <button
-            className="btn-icon"
-            onClick={() => onEdit?.(task)}
-            title="Edit task"
-            aria-label="Edit task"
-          >
-            ✏️
-          </button>
-          <button
-            className="btn-icon"
-            onClick={() => onDelete?.(task)}
-            title="Delete task"
-            aria-label="Delete task"
-          >
-            🗑️
-          </button>
-        </div>
+        {!batchMode && (
+          <div className="task-card-actions">
+            <button className="btn-icon" onClick={() => onEdit?.(task)} title="Edit task" aria-label="Edit task">✏️</button>
+            <button className="btn-icon" onClick={() => onDelete?.(task)} title="Delete task" aria-label="Delete task">🗑️</button>
+          </div>
+        )}
       </div>
     </div>
   );
