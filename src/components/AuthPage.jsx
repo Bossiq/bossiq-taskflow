@@ -29,6 +29,7 @@ export default function AuthPage({ onAuth }) {
       const res = await fetch(`${API}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // accept secure httpOnly cookie from backend
         body: JSON.stringify(body)
       });
 
@@ -40,10 +41,9 @@ export default function AuthPage({ onAuth }) {
         return;
       }
 
-      // Store token and notify parent
-      localStorage.setItem('taskflow-token', data.token);
+      // Store user metadata only (JWT is now safely handled by the browser cookie)
       localStorage.setItem('taskflow-user', JSON.stringify(data.user));
-      onAuth(data.user, data.token);
+      onAuth(data.user); // No longer passing raw token back to App.js
     } catch {
       setError('Network error — is the server running?');
     }

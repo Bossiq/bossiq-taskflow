@@ -67,7 +67,15 @@ router.post('/register', async (req, res) => {
     // Generate token
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.status(201).json({ user, token });
+    // Set secure HTTP-Only cookie
+    res.cookie('taskflow_token', token, {
+      httpOnly: true, // Immune to XSS
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-domain in prod, local in dev
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    res.status(201).json({ user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -102,13 +110,32 @@ router.post('/login', async (req, res) => {
     // Generate token
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
 
+    // Set secure HTTP-Only cookie
+    res.cookie('taskflow_token', token, {
+      httpOnly: true, // Immune to XSS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Vercel domains
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.json({
-      user: { id: user.id, username: user.username, email: user.email, created_at: user.created_at },
-      token
+      user: { id: user.id, username: user.username, email: user.email, created_at: user.created_at }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+/**
+ * POST /api/auth/logout — Clear authentication cookie
+ */
+router.post('/logout', (req, res) => {
+  res.clearCookie('taskflow_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  });
+  res.json({ message: 'Logged out successfully' });
 });
 
 /**

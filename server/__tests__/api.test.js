@@ -293,16 +293,25 @@ describe('API', () => {
 
   // ── Authentication ──
   describe('Auth', () => {
-    let authToken;
+    let authCookie;
     const suffix = Date.now().toString(36);
     const testUser = { username: `tst${suffix}`, email: `tst${suffix}@test.com`, password: 'password123' };
 
     it('registers a new user', async () => {
       const res = await request(app).post('/api/auth/register').send(testUser);
       expect(res.status).toBe(201);
-      expect(res.body).toHaveProperty('token');
+      
+      // Verify secure cookie is set
+      const cookies = res.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      expect(cookies[0]).toMatch(/taskflow_token=eyJ/); // Starts with JWT signature
+      expect(cookies[0]).toContain('HttpOnly');
+      
       expect(res.body.user.username).toBe(testUser.username);
-      authToken = res.body.token;
+      expect(res.body).not.toHaveProperty('token'); // Should NOT leak token in JSON body
+      
+      // Extract just the `taskflow_token=abc...` part for sending back in subsequent requests
+      authCookie = cookies[0].split(';')[0]; 
     });
 
     it('rejects duplicate username', async () => {
@@ -321,7 +330,14 @@ describe('API', () => {
       const res = await request(app).post('/api/auth/login')
         .send({ username: testUser.username, password: testUser.password });
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('token');
+      
+      const cookies = res.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      expect(cookies[0]).toMatch(/taskflow_token=eyJ/);
+      expect(cookies[0]).toContain('HttpOnly');
+      
+      // Set the auth cookie here too in case tests run out of order
+      authCookie = cookies[0].split(';')[0];
     });
 
     it('rejects wrong password', async () => {
@@ -336,16 +352,26 @@ describe('API', () => {
       expect(res.status).toBe(401);
     });
 
-    it('GET /me returns user with valid token', async () => {
+    it('GET /me returns user with valid secure cookie', async () => {
       const res = await request(app).get('/api/auth/me')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', authCookie); // Pass the secure cookie instead of Bearer token
       expect(res.status).toBe(200);
       expect(res.body.username).toBe(testUser.username);
     });
 
-    it('GET /me returns 401 without token', async () => {
+    it('GET /me returns 401 without cookie', async () => {
       const res = await request(app).get('/api/auth/me');
       expect(res.status).toBe(401);
+    });
+    
+    it('POST /logout clears the auth cookie', async () => {
+      const res = await request(app).post('/api/auth/logout');
+      expect(res.status).toBe(200);
+      
+      const cookies = res.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      // Should set an empty cookie with an expired date to clear it
+      expect(cookies[0]).toMatch(/taskflow_token=;/);
     });
   });
 

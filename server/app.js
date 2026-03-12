@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 import xss from 'xss-clean';
+import cookieParser from 'cookie-parser';
 import { randomUUID } from 'crypto';
 import taskRoutes from './routes/tasks.js';
 import projectRoutes from './routes/projects.js';
@@ -51,17 +52,19 @@ app.use(compression());
 
 // ── CORS ──
 const allowedOrigins = IS_PROD 
-  ? [process.env.ALLOWED_ORIGIN || 'https://bossiq-taskflow.vercel.app'] 
-  : '*';
+  ? [process.env.ALLOWED_ORIGIN || 'https://bossiq-taskflow.vercel.app', 'http://localhost:5173'] // allow local front for prod testing
+  : 'http://localhost:5173';
 
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // ESSENTIAL: Allows browser to send secure cookies cross-origin
 }));
 
-// ── Body parsing with strict size limit (DoS protection) ──
+// ── Body & Cookie parsing (DoS protection & Zero-Trust) ──
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 // ── XSS sanitization (aggressively clean incoming JSON) ──
 app.use(xss());

@@ -43,20 +43,16 @@ export default function App() {
 
   // ── Auth helpers ──
   const getHeaders = useCallback(() => {
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    return headers;
-  }, [token]);
+    return { 'Content-Type': 'application/json' };
+  }, []);
 
   // Check saved auth on mount
   useEffect(() => {
-    const savedToken = localStorage.getItem('taskflow-token');
     const savedUser = localStorage.getItem('taskflow-user');
     const skippedAuth = localStorage.getItem('taskflow-skipped');
-    if (savedToken && savedUser) {
+    if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
-        setToken(savedToken);
         setAuthResolved(true);
       } catch { /* ignore */ }
     } else if (skippedAuth) {
@@ -65,9 +61,8 @@ export default function App() {
     setAuthChecked(true);
   }, []);
 
-  const handleAuth = (u, t) => {
+  const handleAuth = (u) => {
     setUser(u);
-    setToken(t);
     setAuthResolved(true);
     if (!u && !t) {
       // "Continue without account" — remember the choice
@@ -78,13 +73,15 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch { /* ignore network error on logout */ }
+    
     setUser(null);
-    setToken(null);
     setAuthResolved(false);
     setTasks([]);
     setProjects([]);
-    localStorage.removeItem('taskflow-token');
     localStorage.removeItem('taskflow-user');
     localStorage.removeItem('taskflow-skipped');
   };
@@ -111,7 +108,7 @@ export default function App() {
       const params = new URLSearchParams();
       if (currentProject) params.set('project_id', currentProject);
       if (debouncedSearch) params.set('search', debouncedSearch);
-      const res = await fetch(`${API}/tasks?${params}`, { headers: getHeaders() });
+      const res = await fetch(`${API}/tasks?${params}`, { headers: getHeaders(), credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const data = await res.json();
       if (Array.isArray(data)) setTasks(data);
@@ -124,7 +121,7 @@ export default function App() {
 
   const fetchProjects = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/projects`, { headers: getHeaders() });
+      const res = await fetch(`${API}/projects`, { headers: getHeaders(), credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
       if (Array.isArray(data)) setProjects(data);
@@ -177,7 +174,7 @@ export default function App() {
       const url = form.id ? `${API}/tasks/${form.id}` : `${API}/tasks`;
       const body = { ...form, project_id: currentProject || 1 };
       const res = await fetch(url, {
-        method, headers: getHeaders(), body: JSON.stringify(body)
+        method, headers: getHeaders(), credentials: 'include', body: JSON.stringify(body)
       });
       if (!res.ok) {
         const data = await res.json();
@@ -201,7 +198,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await fetch(`${API}/tasks/${task.id}`, { method: 'DELETE', headers: getHeaders() });
+          await fetch(`${API}/tasks/${task.id}`, { method: 'DELETE', headers: getHeaders(), credentials: 'include' });
           triggerRefresh();
           addToast('Task deleted');
         } catch {
@@ -218,6 +215,7 @@ export default function App() {
       await fetch(`${API}/tasks/${id}/move`, {
         method: 'PATCH',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ status })
       });
       if (status === 'done') {
@@ -257,6 +255,7 @@ export default function App() {
       const res = await fetch(`${API}/projects`, {
         method: 'POST',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ name, color })
       });
       if (!res.ok) {
@@ -282,7 +281,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API}/projects/${project.id}`, { method: 'DELETE', headers: getHeaders() });
+          const res = await fetch(`${API}/projects/${project.id}`, { method: 'DELETE', headers: getHeaders(), credentials: 'include' });
           if (!res.ok) {
             const data = await res.json();
             addToast(data.error || 'Failed to delete project', 'error');
