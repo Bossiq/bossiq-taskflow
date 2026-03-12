@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard.jsx';
 import TaskModal from './components/TaskModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
 import Toast from './components/Toast.jsx';
+import AuthPage from './components/AuthPage.jsx';
 
 const API = '/api';
 
@@ -28,7 +29,45 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const toastIdRef = useRef(0);
+
+  // ── Auth helpers ──
+  const getHeaders = useCallback(() => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }, [token]);
+
+  // Check saved auth on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem('taskflow-token');
+    const savedUser = localStorage.getItem('taskflow-user');
+    if (savedToken && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+        setToken(savedToken);
+      } catch { /* ignore */ }
+    }
+    setAuthChecked(true);
+  }, []);
+
+  const handleAuth = (u, t) => {
+    setUser(u);
+    setToken(t);
+    setAuthChecked(true);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setToken(null);
+    setTasks([]);
+    setProjects([]);
+    localStorage.removeItem('taskflow-token');
+    localStorage.removeItem('taskflow-user');
+  };
 
   // ── Search debounce (300ms) ──
   useEffect(() => {
@@ -52,7 +91,7 @@ export default function App() {
       const params = new URLSearchParams();
       if (currentProject) params.set('project_id', currentProject);
       if (debouncedSearch) params.set('search', debouncedSearch);
-      const res = await fetch(`${API}/tasks?${params}`);
+      const res = await fetch(`${API}/tasks?${params}`, { headers: getHeaders() });
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const data = await res.json();
       if (Array.isArray(data)) setTasks(data);
@@ -61,11 +100,11 @@ export default function App() {
       console.error('fetchTasks:', err);
       setApiError(true);
     }
-  }, [currentProject, debouncedSearch]);
+  }, [currentProject, debouncedSearch, getHeaders]);
 
   const fetchProjects = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/projects`);
+      const res = await fetch(`${API}/projects`, { headers: getHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
       if (Array.isArray(data)) setProjects(data);
@@ -74,12 +113,14 @@ export default function App() {
       console.error('fetchProjects:', err);
       setApiError(true);
     }
-  }, []);
+  }, [getHeaders]);
 
-  // Initial load
+  // Initial load (after auth check)
   useEffect(() => {
-    Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false));
-  }, []);
+    if (authChecked) {
+      Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false));
+    }
+  }, [authChecked]);
 
   // Re-fetch on dependency changes (not initial)
   useEffect(() => {
@@ -99,7 +140,7 @@ export default function App() {
       const url = form.id ? `${API}/tasks/${form.id}` : `${API}/tasks`;
       const body = { ...form, project_id: currentProject || 1 };
       const res = await fetch(url, {
-        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        method, headers: getHeaders(), body: JSON.stringify(body)
       });
       if (!res.ok) {
         const data = await res.json();
@@ -123,7 +164,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await fetch(`${API}/tasks/${task.id}`, { method: 'DELETE' });
+          await fetch(`${API}/tasks/${task.id}`, { method: 'DELETE', headers: getHeaders() });
           triggerRefresh();
           addToast('Task deleted');
         } catch {
@@ -139,7 +180,7 @@ export default function App() {
     try {
       await fetch(`${API}/tasks/${id}/move`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ status })
       });
       triggerRefresh();
@@ -153,7 +194,7 @@ export default function App() {
     try {
       const res = await fetch(`${API}/projects`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ name, color })
       });
       if (!res.ok) {
@@ -179,7 +220,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API}/projects/${project.id}`, { method: 'DELETE' });
+          const res = await fetch(`${API}/projects/${project.id}`, { method: 'DELETE', headers: getHeaders() });
           if (!res.ok) {
             const data = await res.json();
             addToast(data.error || 'Failed to delete project', 'error');
@@ -242,6 +283,12 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler);
   }, [showModal, confirmDialog]);
 
+  // ── Auth gate ──
+  if (!authChecked) return null;
+  if (authChecked && !user && token === null) {
+    return <AuthPage onAuth={handleAuth} />;
+  }
+
   // ── Loading state ──
   if (loading) {
     return (
@@ -284,6 +331,8 @@ export default function App() {
         onCreateProject={handleCreateProject}
         onDeleteProject={handleDeleteProject}
         onExportCSV={handleExportCSV}
+        user={user}
+        onLogout={handleLogout}
       />
       <main className="main-content" id="main-content">
         <div className="top-bar">

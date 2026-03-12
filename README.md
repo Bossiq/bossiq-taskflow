@@ -27,6 +27,7 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle dashboard, `Esc` close modal
 
 ### Production Quality
+- **🔐 Authentication** — JWT login/register, bcrypt password hashing, user-scoped data
 - **🔒 Security** — Helmet.js headers, rate limiting, XSS sanitization, CORS config
 - **♿ Accessibility** — ARIA roles, focus traps, skip-to-content, screen reader support
 - **⚡ Performance** — Gzip compression, search debouncing, WAL-mode SQLite
@@ -42,7 +43,7 @@ A production-grade, enterprise-ready Kanban task management application built wi
 | Styling | Vanilla CSS (dark/light mode, glassmorphism) |
 | Backend | Node.js, Express 4 |
 | Database | SQLite via better-sqlite3 (WAL mode) |
-| Security | Helmet, express-rate-limit, compression |
+| Security | Helmet, express-rate-limit, compression, bcryptjs, jsonwebtoken |
 | Testing | Vitest, React Testing Library, Supertest |
 | CI/CD | GitHub Actions (Node 18 + 20 matrix) |
 | Hosting | Vercel (frontend) + Render (backend) |
@@ -129,6 +130,9 @@ taskflow/
 | `DELETE` | `/api/tasks/:id` | Delete task |
 | `GET` | `/api/tasks/stats/summary` | Task statistics |
 | `GET` | `/api/tasks/recent/completed` | Recently completed tasks |
+| `POST` | `/api/auth/register` | Create account (returns JWT) |
+| `POST` | `/api/auth/login` | Authenticate (returns JWT) |
+| `GET` | `/api/auth/me` | Get current user (requires auth) |
 | `GET` | `/api/tasks/:taskId/subtasks` | List subtasks for a task |
 | `POST` | `/api/tasks/:taskId/subtasks` | Create subtask |
 | `PATCH` | `/api/tasks/:taskId/subtasks/:id/toggle` | Toggle subtask completion |
@@ -177,6 +181,7 @@ See [`.env.example`](.env.example) for all available variables.
 | `PORT` | `3001` | API server port |
 | `NODE_ENV` | `development` | Environment (`production` enables strict security) |
 | `ALLOWED_ORIGIN` | `*` | CORS allowed origin in production |
+| `JWT_SECRET` | `taskflow-dev-*` | JWT signing secret (change in production!) |
 
 ## 🧪 Testing
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const PROJECT_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#f97316'];
 
-export default function Sidebar({ view, setView, projects, currentProject, setCurrentProject, onCreateProject, onDeleteProject, onExportCSV }) {
+export default function Sidebar({ view, setView, projects, currentProject, setCurrentProject, onCreateProject, onDeleteProject, onExportCSV, user, onLogout }) {
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState('#6366f1');
@@ -107,6 +107,13 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
       </nav>
 
       <div className="sidebar-footer">
+        {user && (
+          <div className="user-info">
+            <div className="user-avatar">{user.username?.[0]?.toUpperCase() || '?'}</div>
+            <span className="user-name">{user.username}</span>
+            <button className="btn-icon" onClick={onLogout} title="Sign out" aria-label="Sign out">↪</button>
+          </div>
+        )}
         <button className="theme-toggle" onClick={onExportCSV} aria-label="Export tasks to CSV">
           📥 Export CSV
         </button>

@@ -4,9 +4,9 @@ import db from '../db.js';
 const router = Router();
 
 /** Helper: log an activity event */
-function logActivity(taskId, action, details = '') {
+function logActivity(taskId, action, details = '', userId = null) {
   try {
-    db.prepare('INSERT INTO activity_log (task_id, action, details) VALUES (?, ?, ?)').run(taskId, action, details);
+    db.prepare('INSERT INTO activity_log (task_id, action, details, user_id) VALUES (?, ?, ?, ?)').run(taskId, action, details, userId);
   } catch { /* non-critical */ }
 }
 
@@ -99,6 +99,10 @@ router.get('/', (req, res) => {
       conditions.push('project_id = ?');
       params.push(project_id);
     }
+    if (req.user) {
+      conditions.push('user_id = ?');
+      params.push(req.user.id);
+    }
     if (status && VALID_STATUSES.includes(status)) {
       conditions.push('status = ?');
       params.push(status);
@@ -156,9 +160,11 @@ router.post('/', (req, res) => {
       'SELECT COALESCE(MAX(position), -1) as max FROM tasks WHERE status = ?'
     ).get(status || 'todo');
 
+    const userId = req.user?.id || null;
+
     const result = db.prepare(`
-      INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       title.trim(),
       (description || '').trim(),
@@ -167,11 +173,12 @@ router.post('/', (req, res) => {
       (label || '').trim(),
       due_date || null,
       project_id || 1,
-      maxPos.max + 1
+      maxPos.max + 1,
+      userId
     );
 
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
-    logActivity(task.id, 'created', `Created task "${task.title}"`);
+    logActivity(task.id, 'created', `Created task "${task.title}"`, userId);
     res.status(201).json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });

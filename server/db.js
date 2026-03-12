@@ -15,12 +15,22 @@ db.pragma('foreign_keys = ON');
 
 // Create tables
 db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     color TEXT DEFAULT '#6366f1',
+    user_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS tasks (
@@ -32,11 +42,13 @@ db.exec(`
     label TEXT DEFAULT '',
     due_date TEXT,
     project_id INTEGER,
+    user_id INTEGER,
     position INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     completed_at DATETIME,
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
   -- Seed a default project if none exist
@@ -57,18 +69,26 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS activity_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER,
+    user_id INTEGER,
     action TEXT NOT NULL,
     details TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
   );
 `);
 
-// Migration: add due_date to existing databases that don't have it
-try {
-  db.prepare("SELECT due_date FROM tasks LIMIT 1").get();
-} catch {
-  db.exec("ALTER TABLE tasks ADD COLUMN due_date TEXT");
-}
+// Migrations for existing databases
+try { db.prepare("SELECT due_date FROM tasks LIMIT 1").get(); }
+catch { db.exec("ALTER TABLE tasks ADD COLUMN due_date TEXT"); }
+
+try { db.prepare("SELECT user_id FROM tasks LIMIT 1").get(); }
+catch { db.exec("ALTER TABLE tasks ADD COLUMN user_id INTEGER"); }
+
+try { db.prepare("SELECT user_id FROM projects LIMIT 1").get(); }
+catch { db.exec("ALTER TABLE projects ADD COLUMN user_id INTEGER"); }
+
+try { db.prepare("SELECT user_id FROM activity_log LIMIT 1").get(); }
+catch { db.exec("ALTER TABLE activity_log ADD COLUMN user_id INTEGER"); }
 
 export default db;
