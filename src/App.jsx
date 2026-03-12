@@ -34,6 +34,7 @@ export default function App() {
   const [authResolved, setAuthResolved] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [coldStartMsg, setColdStartMsg] = useState(false);
   const toastIdRef = useRef(0);
 
   // ── Auth helpers ──
@@ -323,14 +324,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler);
   }, [showModal, confirmDialog]);
 
-  // ── Auth gate ──
-  if (!authChecked) return null;
-  if (!authResolved) {
-    return <AuthPage onAuth={handleAuth} />;
-  }
-
-  // ── Loading state with cold-start notification ──
-  const [coldStartMsg, setColdStartMsg] = useState(false);
+  // ── Cold-start notification (shows after 3s of loading) ──
   useEffect(() => {
     if (loading) {
       const timer = setTimeout(() => setColdStartMsg(true), 3000);
@@ -338,6 +332,12 @@ export default function App() {
     }
     setColdStartMsg(false);
   }, [loading]);
+
+  // ── Auth gate ──
+  if (!authChecked) return null;
+  if (!authResolved) {
+    return <AuthPage onAuth={handleAuth} />;
+  }
 
   if (loading) {
     return (
