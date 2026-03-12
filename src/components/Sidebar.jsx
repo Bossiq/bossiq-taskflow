@@ -104,11 +104,17 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
       </nav>
 
       <div className="sidebar-footer">
-        {user && (
+        {user ? (
           <div className="user-info">
             <div className="user-avatar">{user.username?.[0]?.toUpperCase() || '?'}</div>
             <span className="user-name">{user.username}</span>
             <button className="btn-icon" onClick={onLogout} title="Sign out" aria-label="Sign out">↪</button>
+          </div>
+        ) : (
+          <div className="user-info guest">
+            <div className="user-avatar guest">✨</div>
+            <span className="user-name">Guest</span>
+            <button className="btn-icon" onClick={onLogout} title="Sign in" aria-label="Sign in to save your data">🔑</button>
           </div>
         )}
         <button className="theme-toggle" onClick={onExportCSV} aria-label="Export tasks to CSV">

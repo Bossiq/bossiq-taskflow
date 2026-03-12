@@ -44,7 +44,7 @@ function formatDueDate(dueDate) {
 /**
  * TaskCard — Displays an individual task with drag-and-drop and batch selection support.
  */
-export default function TaskCard({ task, onEdit, onDelete, batchMode, selected, onToggleSelect }) {
+const TaskCard = React.memo(function TaskCard({ task, onEdit, onDelete, batchMode, selected, onToggleSelect, style }) {
   const overdue = task.status !== 'done' && isOverdue(task.due_date);
 
   const handleClick = () => {
@@ -57,6 +57,7 @@ export default function TaskCard({ task, onEdit, onDelete, batchMode, selected, 
     <div
       className={`task-card ${overdue ? 'task-card-overdue' : ''} ${selected ? 'task-card-selected' : ''}`}
       data-priority={task.priority}
+      style={style}
       role="article"
       aria-label={`Task: ${task.title}`}
       draggable={!batchMode}
@@ -121,4 +122,6 @@ export default function TaskCard({ task, onEdit, onDelete, batchMode, selected, 
       </div>
     </div>
   );
-}
+});
+
+export default TaskCard;

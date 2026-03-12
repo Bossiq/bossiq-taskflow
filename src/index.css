@@ -492,6 +492,9 @@ html, body, #root {
   cursor: grab;
   transition: all var(--transition);
   position: relative;
+  /* Premium staggered entrance animation */
+  opacity: 0;
+  animation: cardSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 /* Priority left-stripe colors */
 .task-card[data-priority="urgent"] { border-left-color: var(--urgent); }
@@ -507,7 +510,7 @@ html, body, #root {
   transform: translateY(-3px);
 }
 
-.task-card.dragging { opacity: 0.4; transform: rotate(2deg) scale(0.96); }
+.task-card.dragging { opacity: 0.4 !important; transform: rotate(2deg) scale(0.96); }
 
 .task-card-header {
   display: flex;
@@ -963,6 +966,15 @@ input[type="date"].form-input {
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes cardSlideUp {
+  from { opacity: 0; transform: translateY(15px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes authGradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 /* ===== RESPONSIVE ===== */
 /* ===== EMPTY BOARD STATE ===== */
@@ -1343,7 +1355,9 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f0a1e 0%, #1a1035 40%, #0d1b2a 100%);
+  background: linear-gradient(-45deg, #0f0a1e, #1a1035, #0d1b2a, #2e1065);
+  background-size: 400% 400%;
+  animation: authGradientBG 15s ease infinite;
   padding: 20px;
 }
 .auth-card {

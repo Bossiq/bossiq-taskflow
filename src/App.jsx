@@ -35,6 +35,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [coldStartMsg, setColdStartMsg] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const toastIdRef = useRef(0);
 
   // ── Auth helpers ──
@@ -137,6 +138,23 @@ export default function App() {
       Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false));
     }
   }, [authChecked]);
+
+  // Auto-retry on API error (cold start) every 5s, up to 6 attempts
+  useEffect(() => {
+    if (apiError && retryCount < 6) {
+      const timer = setTimeout(() => {
+        setRetryCount(c => c + 1);
+        Promise.all([fetchTasks(), fetchProjects()]).then(() => setApiError(false));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [apiError, retryCount]);
+
+  // Dynamic document title
+  useEffect(() => {
+    const count = tasks.length;
+    document.title = count > 0 ? `(${count}) TaskFlow` : 'TaskFlow — Task Tracker';
+  }, [tasks.length]);
 
   // Re-fetch on dependency changes (not initial)
   useEffect(() => {
@@ -371,7 +389,17 @@ export default function App() {
         <p style={{ maxWidth: 400, textAlign: 'center', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
           Our free-tier backend spins down after inactivity. It usually restarts in 15-30 seconds.
         </p>
-        <button className="btn btn-primary" onClick={() => { setApiError(false); setLoading(true); Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false)); }}>
+        {retryCount > 0 && retryCount < 6 && (
+          <p style={{ color: 'var(--accent)', fontSize: '0.9rem', marginTop: 10 }}>
+            Auto-retrying... (Attempt {retryCount}/5)
+          </p>
+        )}
+        {retryCount >= 6 && (
+          <p style={{ color: 'var(--danger)', fontSize: '0.9rem', marginTop: 10 }}>
+            Still no response. The server might be down.
+          </p>
+        )}
+        <button className="btn btn-primary" onClick={() => { setApiError(false); setRetryCount(0); setLoading(true); Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false)); }} style={{ marginTop: 20 }}>
           ⟳ Try Again
         </button>
       </div>

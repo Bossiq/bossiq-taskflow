@@ -275,7 +275,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, col.id)}
               >
-                {colTasks.map(task => (
+                {colTasks.map((task, idx) => (
                   <TaskCard
                     key={task.id}
                     task={task}
@@ -284,6 +284,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
                     batchMode={batchMode}
                     selected={selectedIds.has(task.id)}
                     onToggleSelect={toggleSelect}
+                    style={{ animationDelay: `${(idx * 60)}ms` }}
                   />
                 ))}
                 {colTasks.length === 0 && (
