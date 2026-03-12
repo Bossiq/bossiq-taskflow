@@ -12,6 +12,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
+import xss from 'xss-clean';
 import { randomUUID } from 'crypto';
 import taskRoutes from './routes/tasks.js';
 import projectRoutes from './routes/projects.js';
@@ -25,29 +26,49 @@ import { sanitizeBody } from './middleware/sanitize.js';
 const app = express();
 const IS_PROD = process.env.NODE_ENV === 'production';
 
-// ── Security Headers ──
+// ── Security Headers (Helmet) ──
 app.use(helmet({
-  contentSecurityPolicy: IS_PROD ? undefined : false,
-  crossOriginEmbedderPolicy: false
+  contentSecurityPolicy: IS_PROD ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'"]
+    }
+  } : false,
+  crossOriginEmbedderPolicy: false,
+  xFrameOptions: { action: "deny" }, // Prevent clickjacking
+  strictTransportSecurity: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
 }));
 
 // ── Compression ──
 app.use(compression());
 
 // ── CORS ──
+const allowedOrigins = IS_PROD 
+  ? [process.env.ALLOWED_ORIGIN || 'https://bossiq-taskflow.vercel.app'] 
+  : '*';
+
 app.use(cors({
-  origin: IS_PROD ? process.env.ALLOWED_ORIGIN : '*',
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// ── Body parsing with size limit ──
-app.use(express.json({ limit: '100kb' }));
+// ── Body parsing with strict size limit (DoS protection) ──
+app.use(express.json({ limit: '10kb' }));
 
-// ── XSS sanitization ──
+// ── XSS sanitization (aggressively clean incoming JSON) ──
+app.use(xss());
 app.use(sanitizeBody);
 
 // ── Rate limiting ──
+// Global Limiter (100 reqs / 15 mins)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: IS_PROD ? 100 : 1000,
@@ -55,7 +76,18 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' }
 });
+
+// Strict Auth Limiter (5 reqs / 15 mins) - Prevent Brute Force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: IS_PROD ? 5 : 50, // 5 attempts per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' }
+});
+
 app.use('/api/', apiLimiter);
+app.use('/api/auth/', authLimiter); // Mount aggressive limiter on auth routes
 
 // ── Request ID + Logging ──
 app.use((req, res, next) => {

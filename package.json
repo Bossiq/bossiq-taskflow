@@ -23,7 +23,8 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
