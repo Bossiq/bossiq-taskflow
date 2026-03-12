@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const API = '/api';
 
@@ -17,6 +19,8 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
   const [newSubtask, setNewSubtask] = useState('');
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [previewDesc, setPreviewDesc] = useState(false);
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
   const headers = getHeaders?.() || { 'Content-Type': 'application/json' };
@@ -41,10 +45,16 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
         .then(r => r.json())
         .then(data => setComments(Array.isArray(data) ? data : []))
         .catch(() => {});
+      // Fetch activity logs
+      fetch(`${API}/tasks/${task.id}/activity`, { headers })
+        .then(r => r.json())
+        .then(data => setActivityLogs(Array.isArray(data) ? data : []))
+        .catch(() => {});
     } else {
       setForm(defaultForm);
       setSubtasks([]);
       setComments([]);
+      setActivityLogs([]);
     }
   }, [task]);
 
@@ -145,14 +155,45 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             )}
           </div>
 
-          <div className="form-group floating">
-            <textarea id="task-desc" className="form-textarea" value={form.description}
-              onChange={set('description')} placeholder=" " maxLength={2000} />
-            <label htmlFor="task-desc">Description</label>
-            {form.description.length > 0 && (
-              <span className={`char-counter ${form.description.length > 1800 ? 'warn' : ''}`}>
-                {form.description.length}/2000
-              </span>
+          <div className="form-group markdown-editor-group">
+            <div className="markdown-tabs">
+              <button
+                type="button"
+                className={`md-tab ${!previewDesc ? 'active' : ''}`}
+                onClick={() => setPreviewDesc(false)}
+              >
+                Write
+              </button>
+              <button
+                type="button"
+                className={`md-tab ${previewDesc ? 'active' : ''}`}
+                onClick={() => setPreviewDesc(true)}
+              >
+                Preview
+              </button>
+            </div>
+            
+            {!previewDesc ? (
+              <div className="floating">
+                <textarea id="task-desc" className="form-textarea desc-textarea" value={form.description}
+                  onChange={set('description')} placeholder="Supports Markdown (e.g. **bold**, - lists)" maxLength={5000} />
+                <label htmlFor="task-desc">Description (Markdown Supported)</label>
+                {form.description.length > 0 && (
+                  <span className={`char-counter ${form.description.length > 4500 ? 'warn' : ''}`}>
+                    {form.description.length}/5000
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="markdown-body preview-box">
+                {form.description.trim() ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {form.description}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="empty-preview">Nothing to preview.</span>
+                )}
+              </div>
             )}
           </div>
 
@@ -316,6 +357,26 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                     }}
                   >Post</button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Activity Timeline — only for existing tasks */}
+          {task?.id && activityLogs.length > 0 && (
+            <div className="form-group">
+              <label>📜 Activity History</label>
+              <div className="activity-timeline">
+                {activityLogs.map(log => (
+                  <div key={log.id} className="activity-item">
+                    <div className="activity-dot"></div>
+                    <div className="activity-content">
+                      <span className="activity-action">{log.details || log.action}</span>
+                      <span className="activity-meta">
+                        {new Date(log.created_at).toLocaleString()} • {log.user_name || 'System'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { DragDropContext } from '@hello-pangea/dnd';
 import Board from '../Board.jsx';
 
 const mockTasks = [
@@ -9,16 +10,24 @@ const mockTasks = [
   { id: 4, title: 'Task D', status: 'todo', priority: 'urgent', description: '', label: '', created_at: new Date().toISOString() },
 ];
 
+const renderWithDnd = (ui) => {
+  return render(
+    <DragDropContext onDragEnd={() => {}}>
+      {ui}
+    </DragDropContext>
+  );
+};
+
 describe('Board', () => {
   it('renders three columns when tasks exist', () => {
-    render(<Board tasks={mockTasks} />);
+    renderWithDnd(<Board tasks={mockTasks} />);
     expect(screen.getByText('To Do')).toBeInTheDocument();
     expect(screen.getByText('In Progress')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
   });
 
   it('distributes tasks into correct columns', () => {
-    render(<Board tasks={mockTasks} />);
+    renderWithDnd(<Board tasks={mockTasks} />);
     expect(screen.getByText('Task A')).toBeInTheDocument();
     expect(screen.getByText('Task B')).toBeInTheDocument();
     expect(screen.getByText('Task C')).toBeInTheDocument();
@@ -26,26 +35,26 @@ describe('Board', () => {
   });
 
   it('shows correct task counts', () => {
-    render(<Board tasks={mockTasks} />);
+    renderWithDnd(<Board tasks={mockTasks} />);
     const counts = screen.getAllByLabelText(/^\d+ tasks$/);
     expect(counts.length).toBeGreaterThanOrEqual(3);
   });
 
   it('shows onboarding message when board is empty', () => {
-    render(<Board tasks={[]} />);
+    renderWithDnd(<Board tasks={[]} />);
     expect(screen.getByText('Your board is clear')).toBeInTheDocument();
     expect(screen.getByText('+ Create New Task')).toBeInTheDocument();
   });
 
   it('has ARIA region roles on columns when tasks exist', () => {
-    render(<Board tasks={mockTasks} />);
+    renderWithDnd(<Board tasks={mockTasks} />);
     const regions = screen.getAllByRole('region');
     expect(regions).toHaveLength(3);
   });
 
   it('shows empty column message when only some columns have tasks', () => {
     const singleTask = [{ id: 1, title: 'Solo', status: 'todo', priority: 'low', description: '', label: '', created_at: new Date().toISOString() }];
-    render(<Board tasks={singleTask} />);
+    renderWithDnd(<Board tasks={singleTask} />);
     const emptyMessages = screen.getAllByText('Drop tasks here');
     expect(emptyMessages).toHaveLength(2); // inprogress + done are empty
   });

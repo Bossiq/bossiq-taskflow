@@ -1,4 +1,7 @@
 import React from 'react';
+import { Draggable } from '@hello-pangea/dnd';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 /**
  * Formats a date string into relative time (e.g., "2h ago", "3d ago").
@@ -44,7 +47,7 @@ function formatDueDate(dueDate) {
 /**
  * TaskCard — Displays an individual task with drag-and-drop and batch selection support.
  */
-const TaskCard = React.memo(function TaskCard({ task, onEdit, onDelete, batchMode, selected, onToggleSelect, style }) {
+const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, batchMode, selected, onToggleSelect, style }) {
   const overdue = task.status !== 'done' && isOverdue(task.due_date);
 
   const handleClick = () => {
@@ -54,21 +57,20 @@ const TaskCard = React.memo(function TaskCard({ task, onEdit, onDelete, batchMod
   };
 
   return (
-    <div
-      className={`task-card ${overdue ? 'task-card-overdue' : ''} ${selected ? 'task-card-selected' : ''}`}
-      data-priority={task.priority}
-      style={style}
-      role="article"
-      aria-label={`Task: ${task.title}`}
-      draggable={!batchMode}
-      onClick={handleClick}
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify(task));
-        e.currentTarget.classList.add('dragging');
-      }}
-      onDragEnd={(e) => e.currentTarget.classList.remove('dragging')}
-    >
-      {batchMode && (
+    <Draggable draggableId={String(task.id)} index={index} isDragDisabled={batchMode}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className={`task-card ${overdue ? 'task-card-overdue' : ''} ${selected ? 'task-card-selected' : ''} ${snapshot.isDragging ? 'dragging' : ''}`}
+          data-priority={task.priority}
+          style={{ ...style, ...provided.draggableProps.style }}
+          role="article"
+          aria-label={`Task: ${task.title}`}
+          onClick={handleClick}
+        >
+          {batchMode && (
         <div className="task-card-checkbox">
           <input
             type="checkbox"
@@ -84,7 +86,9 @@ const TaskCard = React.memo(function TaskCard({ task, onEdit, onDelete, batchMod
       </div>
 
       {task.description && (
-        <p className="task-card-desc">{task.description}</p>
+        <div className="task-card-desc markdown-body preview-mini">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{task.description}</ReactMarkdown>
+        </div>
       )}
 
       {task.subtask_total > 0 && (
@@ -121,6 +125,8 @@ const TaskCard = React.memo(function TaskCard({ task, onEdit, onDelete, batchMod
         )}
       </div>
     </div>
+      )}
+    </Draggable>
   );
 });
 

@@ -6,13 +6,18 @@ A production-grade, enterprise-ready Kanban task management application built wi
 
 ![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black) ![Tests](https://img.shields.io/badge/tests-65_passing-brightgreen)
 
-![TaskFlow Screenshot](docs/screenshot.png)
-
+<p align="center">
+  <img src="docs/screenshot.png" width="49%" alt="TaskFlow Dark Mode Board"/>
+  <img src="docs/board_light.png" width="49%" alt="TaskFlow Light Mode Board"/>
+</p>
+<p align="center">
+  <img src="docs/auth_screen.png" width="99%" alt="TaskFlow Split-Screen Authentication"/>
+</p>
 ## ✨ Features
 
 ### Core
-- **Kanban Board** — Drag-and-drop tasks between To Do, In Progress, and Done columns
-- **Full CRUD** — Create, edit, and delete tasks with title, description, priority, and labels
+- **Markdown Support** — Rich text editing in task descriptions (bold, lists, code blocks)
+- **Kanban Board** — Fluid drag-and-drop animation powered by `@hello-pangea/dnd`
 - **Subtask Checklists** — Add, toggle, and delete subtasks with progress bar on task cards
 - **Due Dates** — Date picker with smart display (Today, Tomorrow, Xd left) and overdue highlighting
 - **Multi-Project Support** — Create and switch between projects with color-coded sidebar
@@ -20,7 +25,7 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Task Filtering** — Priority filter chips and label dropdown, combinable with sorting
 - **Batch Actions** — Select multiple tasks → bulk move, delete, or reprioritize
 - **Statistics Dashboard** — Donut chart, priority bars, overdue warnings, productivity streak
-- **Activity Log** — Tracks task lifecycle (created, updated, moved, completed, deleted)
+- **Enterprise Activity Log** — Micro-audit trail tracking all task creation, updates, and movements
 - **Dark/Light Theme** — Toggle with persistent localStorage preference
 - **Search** — Debounced full-text search across all tasks
 - **CSV Export** — Export all tasks to downloadable CSV file
@@ -29,12 +34,11 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle dashboard, `Esc` close modal
 
 ### Production Quality
-- **🔐 Authentication** — JWT login/register, bcrypt password hashing, user-scoped data
-- **🔒 Security** — Helmet.js headers, rate limiting, XSS sanitization, CORS config
-- **♿ Accessibility** — ARIA roles, focus traps, skip-to-content, screen reader support
-- **⚡ Performance** — Gzip compression, search debouncing, WAL-mode SQLite
-- **🛡️ Error Handling** — React Error Boundary, global Express error handler, toast notifications
-- **📱 PWA** — Web manifest, service worker, installable on mobile and desktop
+- **🛡️ Zero-Trust Architecture** — Helmet.js headers, strict CORS, express-rate-limit, and HTML sanitization
+- **🔐 Authentication** — JWT HttpOnly secure cookie sessions, bcrypt password hashing (12 rounds)
+- **♿ Accessibility** — Keyboard draggable cards, ARIA roles, focus traps, screen reader support
+- **⚡ Performance** — Gzip compression, search debouncing, optimized React re-renders, WAL-mode SQLite
+- **📱 Progressive Web App (PWA)** — Installable on iOS/Android/Desktop directly from the browser
 - **📱 Responsive** — Works on desktop, tablet, and mobile
 
 ## 🛠️ Tech Stack

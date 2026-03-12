@@ -346,4 +346,22 @@ router.patch('/:id/reorder', (req, res) => {
   }
 });
 
+/**
+ * GET /:id/activity — Fetch the audit log timeline for a task
+ */
+router.get('/:id/activity', (req, res) => {
+  try {
+    const logs = db.prepare(`
+      SELECT a.*, u.username as user_name 
+      FROM activity_log a
+      LEFT JOIN users u ON a.user_id = u.id
+      WHERE a.task_id = ?
+      ORDER BY a.created_at DESC
+    `).all(req.params.id);
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

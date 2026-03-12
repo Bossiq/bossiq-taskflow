@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import TaskCard from './TaskCard.jsx';
 
 /** @constant COLUMNS — Kanban column definitions */
@@ -127,42 +128,31 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
 
   const activeFilterCount = priorityFilters.length + (labelFilter ? 1 : 0);
 
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
-  }, []);
+  const onDragEnd = useCallback((result) => {
+    const { source, destination, draggableId } = result;
+    
+    // Dropped outside a valid droppable area
+    if (!destination) return;
 
-  const handleDragLeave = useCallback((e) => {
-    e.currentTarget.classList.remove('drag-over');
-  }, []);
+    // Dropped in the same place
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
 
-  const handleDrop = useCallback((e, status) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    try {
-      const task = JSON.parse(e.dataTransfer.getData('text/plain'));
-      if (task.status !== status) {
-        onMove?.(task.id, status);
-      } else {
-        // Same-column drop — reorder
-        const column = e.currentTarget;
-        const cards = column.querySelectorAll('.task-card');
-        let position = cards.length;
-        for (let i = 0; i < cards.length; i++) {
-          const rect = cards[i].getBoundingClientRect();
-          if (e.clientY < rect.top + rect.height / 2) {
-            position = i;
-            break;
-          }
-        }
-        fetch(`/api/tasks/${task.id}/reorder`, {
-          method: 'PATCH',
-          headers: getHeaders?.() || { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ position })
-        }).then(() => onBatchAction?.()).catch(() => {});
-      }
-    } catch (_) { /* ignore */ }
+    const taskId = parseInt(draggableId, 10);
+    
+    // Changing columns
+    if (source.droppableId !== destination.droppableId) {
+      onMove?.(taskId, destination.droppableId);
+    } 
+    // Same column - reordering
+    else {
+      fetch(`/api/tasks/${taskId}/reorder`, {
+        method: 'PATCH',
+        headers: getHeaders?.() || { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ position: destination.index })
+      }).then(() => onBatchAction?.()).catch(() => {});
+    }
   }, [onMove, getHeaders, onBatchAction]);
 
   // Apply filters then sort
@@ -200,11 +190,12 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
   }
 
   return (
-    <div className="board" role="group" aria-label="Kanban Board">
-      <div className="board-toolbar">
-        {/* Sort */}
-        <div className="toolbar-group">
-          <label htmlFor="sort-select" className="sort-label">Sort by</label>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div className="board" role="group" aria-label="Kanban Board">
+        <div className="board-toolbar">
+          {/* Sort */}
+          <div className="toolbar-group">
+            <label htmlFor="sort-select" className="sort-label">Sort by</label>
           <select id="sort-select" className="sort-select" value={sortBy} onChange={handleSortChange} aria-label="Sort tasks">
             {SORT_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -279,33 +270,33 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
                   <span className="column-count" aria-label={`${colTasks.length} tasks`}>{colTasks.length}</span>
                 </div>
               </div>
-              <div
-                className="column-cards"
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, col.id)}
-              >
+              <Droppable droppableId={col.id}>
+                {(provided, snapshot) => (
+                  <div
+                    className={`column-cards ${snapshot.isDraggingOver ? 'drag-over' : ''}`}
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                  >
                 {colTasks.map((task, idx) => (
                   <TaskCard
                     key={task.id}
                     task={task}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    batchMode={batchMode}
-                    selected={selectedIds.has(task.id)}
-                    onToggleSelect={toggleSelect}
-                    style={{ animationDelay: `${(idx * 60)}ms` }}
+                    index={idx}
                   />
                 ))}
+                {provided.placeholder}
                 {colTasks.length === 0 && (
                   <p className="column-empty">Drop tasks here</p>
                 )}
               </div>
+                )}
+              </Droppable>
             </div>
           );
         })}
       </div>
       <div aria-live="polite" aria-atomic="true" className="sr-only" id="drag-announcement" />
     </div>
+    </DragDropContext>
   );
 }
