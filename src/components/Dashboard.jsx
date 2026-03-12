@@ -48,7 +48,6 @@ export default function Dashboard({ refreshKey }) {
 
   return (
     <div className="dashboard">
-      <h1>📊 Dashboard</h1>
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-value">{stats.total}</div>

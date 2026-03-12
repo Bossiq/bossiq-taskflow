@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const PROJECT_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#f97316'];
 
-export default function Sidebar({ view, setView, projects, currentProject, setCurrentProject, onCreateProject }) {
+export default function Sidebar({ view, setView, projects, currentProject, setCurrentProject, onCreateProject, onDeleteProject, onExportCSV }) {
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState('#6366f1');
@@ -31,7 +31,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
       </div>
       <nav className="sidebar-nav">
         <button
-          className={`nav-item ${view === 'board' && !currentProject ? 'active' : ''}`}
+          className={`nav-item ${!currentProject && view !== 'dashboard' ? 'active' : ''}`}
           onClick={() => { setCurrentProject(null); setView('board'); }}
         >
           📋 All Tasks
@@ -81,21 +81,35 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
         )}
 
         {projects.map(p => (
-          <button
-            key={p.id}
-            className={`nav-item ${currentProject === p.id ? 'active' : ''}`}
-            onClick={() => { setCurrentProject(p.id); setView('board'); }}
-          >
-            <span className="project-dot" style={{ background: p.color }} />
-            <span className="nav-item-text">{p.name}</span>
-            {p.totalTasks > 0 && (
-              <span className="nav-badge">{p.totalTasks}</span>
+          <div key={p.id} className="nav-item-row">
+            <button
+              className={`nav-item ${currentProject === p.id ? 'active' : ''}`}
+              onClick={() => { setCurrentProject(p.id); setView('board'); }}
+            >
+              <span className="project-dot" style={{ background: p.color }} />
+              <span className="nav-item-text">{p.name}</span>
+              {p.totalTasks > 0 && (
+                <span className="nav-badge">{p.totalTasks}</span>
+              )}
+            </button>
+            {projects.length > 1 && (
+              <button
+                className="btn-icon btn-delete-project"
+                onClick={(e) => { e.stopPropagation(); onDeleteProject?.(p); }}
+                title={`Delete ${p.name}`}
+                aria-label={`Delete project ${p.name}`}
+              >
+                🗑
+              </button>
             )}
-          </button>
+          </div>
         ))}
       </nav>
 
       <div className="sidebar-footer">
+        <button className="theme-toggle" onClick={onExportCSV} aria-label="Export tasks to CSV">
+          📥 Export CSV
+        </button>
         <button
           className="theme-toggle"
           onClick={() => {

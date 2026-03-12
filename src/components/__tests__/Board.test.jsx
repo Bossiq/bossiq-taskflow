@@ -10,8 +10,8 @@ const mockTasks = [
 ];
 
 describe('Board', () => {
-  it('renders three columns', () => {
-    render(<Board tasks={[]} />);
+  it('renders three columns when tasks exist', () => {
+    render(<Board tasks={mockTasks} />);
     expect(screen.getByText('To Do')).toBeInTheDocument();
     expect(screen.getByText('In Progress')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
@@ -27,20 +27,26 @@ describe('Board', () => {
 
   it('shows correct task counts', () => {
     render(<Board tasks={mockTasks} />);
-    // COLUMNS: todo=2, inprogress=1, done=1
     const counts = screen.getAllByLabelText(/^\d+ tasks$/);
     expect(counts.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('shows empty state when no tasks', () => {
+  it('shows onboarding message when board is empty', () => {
     render(<Board tasks={[]} />);
-    const emptyMessages = screen.getAllByText('Drop tasks here');
-    expect(emptyMessages).toHaveLength(3);
+    expect(screen.getByText('No tasks yet')).toBeInTheDocument();
+    expect(screen.getByText('+ New Task')).toBeInTheDocument();
   });
 
-  it('has ARIA region roles on columns', () => {
-    render(<Board tasks={[]} />);
+  it('has ARIA region roles on columns when tasks exist', () => {
+    render(<Board tasks={mockTasks} />);
     const regions = screen.getAllByRole('region');
     expect(regions).toHaveLength(3);
+  });
+
+  it('shows empty column message when only some columns have tasks', () => {
+    const singleTask = [{ id: 1, title: 'Solo', status: 'todo', priority: 'low', description: '', label: '', created_at: new Date().toISOString() }];
+    render(<Board tasks={singleTask} />);
+    const emptyMessages = screen.getAllByText('Drop tasks here');
+    expect(emptyMessages).toHaveLength(2); // inprogress + done are empty
   });
 });

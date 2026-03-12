@@ -170,6 +170,52 @@ export default function App() {
     }
   };
 
+  // ── Project deletion ──
+  const handleDeleteProject = (project) => {
+    setConfirmDialog({
+      title: 'Delete Project',
+      message: `Delete "${project.name}" and reassign its tasks? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API}/projects/${project.id}`, { method: 'DELETE' });
+          if (!res.ok) {
+            const data = await res.json();
+            addToast(data.error || 'Failed to delete project', 'error');
+          } else {
+            if (currentProject === project.id) setCurrentProject(null);
+            triggerRefresh();
+            addToast(`Project "${project.name}" deleted`);
+          }
+        } catch {
+          addToast('Network error', 'error');
+        }
+        setConfirmDialog(null);
+      },
+      onCancel: () => setConfirmDialog(null)
+    });
+  };
+
+  // ── Export to CSV ──
+  const handleExportCSV = () => {
+    if (tasks.length === 0) { addToast('No tasks to export', 'info'); return; }
+    const headers = ['Title', 'Description', 'Status', 'Priority', 'Label', 'Due Date', 'Created'];
+    const rows = tasks.map(t => [
+      `"${(t.title || '').replace(/"/g, '""')}"`,
+      `"${(t.description || '').replace(/"/g, '""')}"`,
+      t.status, t.priority, t.label || '', t.due_date || '', t.created_at || ''
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `taskflow-export-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addToast(`Exported ${tasks.length} tasks to CSV`);
+  };
+
   const openEdit = (task) => { setModalTask(task); setShowModal(true); };
   const openNew = () => { setModalTask(null); setShowModal(true); };
 
@@ -218,6 +264,7 @@ export default function App() {
     : currentProject
       ? (currentProjectObj?.name || 'Tasks')
       : 'All Tasks';
+  const taskCount = tasks.length;
 
   return (
     <div className="app">
@@ -227,10 +274,12 @@ export default function App() {
         currentProject={currentProject}
         setCurrentProject={setCurrentProject}
         onCreateProject={handleCreateProject}
+        onDeleteProject={handleDeleteProject}
+        onExportCSV={handleExportCSV}
       />
       <main className="main-content" id="main-content">
         <div className="top-bar">
-          <h1>{pageTitle}</h1>
+          <h1>{pageTitle} {view === 'board' && <span className="header-count">{taskCount}</span>}</h1>
           <div className="search-box">
             <span aria-hidden="true">🔍</span>
             <input

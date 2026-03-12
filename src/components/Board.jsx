@@ -40,6 +40,21 @@ export default function Board({ tasks, onEdit, onDelete, onMove }) {
     } catch (_) { /* ignore invalid drag data */ }
   }, [onMove]);
 
+  // Check if entire board is empty (first-time user)
+  const isEmpty = tasks.length === 0;
+
+  if (isEmpty) {
+    return (
+      <div className="board-empty" role="status">
+        <div className="board-empty-inner">
+          <span className="board-empty-icon">📋</span>
+          <h2>No tasks yet</h2>
+          <p>Click <strong>+ New Task</strong> or press <kbd>N</kbd> to create your first task.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="board" role="group" aria-label="Kanban Board">
       {COLUMNS.map(col => {
