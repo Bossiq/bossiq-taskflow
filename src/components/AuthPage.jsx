@@ -11,6 +11,7 @@ export default function AuthPage({ onAuth }) {
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
 
@@ -112,17 +113,22 @@ export default function AuthPage({ onAuth }) {
 
           <div className="form-group">
             <label htmlFor="auth-password">Password</label>
-            <input
-              id="auth-password"
-              type="password"
-              className="form-input"
-              value={form.password}
-              onChange={set('password')}
-              placeholder={mode === 'register' ? 'At least 6 characters' : 'Enter password'}
-              required
-              minLength={mode === 'register' ? 6 : undefined}
-              autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-            />
+            <div className="password-wrapper">
+              <input
+                id="auth-password"
+                type={showPw ? 'text' : 'password'}
+                className="form-input"
+                value={form.password}
+                onChange={set('password')}
+                placeholder={mode === 'register' ? 'At least 6 characters' : 'Enter password'}
+                required
+                minLength={mode === 'register' ? 6 : undefined}
+                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+              />
+              <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
+                {showPw ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           {error && (

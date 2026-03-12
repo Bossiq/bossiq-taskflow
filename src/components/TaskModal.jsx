@@ -172,6 +172,25 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             <label htmlFor="task-due">Due Date</label>
             <input id="task-due" type="date" className="form-input" value={form.due_date}
               onChange={set('due_date')} />
+            <div className="date-shortcuts">
+              {[
+                { label: 'Today', days: 0 },
+                { label: 'Tomorrow', days: 1 },
+                { label: 'Next Week', days: 7 }
+              ].map(({ label, days }) => {
+                const d = new Date();
+                d.setDate(d.getDate() + days);
+                const val = d.toISOString().split('T')[0];
+                return (
+                  <button key={label} type="button" className="btn btn-sm btn-ghost date-shortcut"
+                    onClick={() => setForm(f => ({ ...f, due_date: val }))}>{label}</button>
+                );
+              })}
+              {form.due_date && (
+                <button type="button" className="btn btn-sm btn-ghost date-shortcut"
+                  onClick={() => setForm(f => ({ ...f, due_date: '' }))}>✕ Clear</button>
+              )}
+            </div>
           </div>
 
           {/* Subtask checklist — only for existing tasks */}

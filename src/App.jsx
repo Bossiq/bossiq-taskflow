@@ -31,6 +31,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const toastIdRef = useRef(0);
@@ -46,11 +47,15 @@ export default function App() {
   useEffect(() => {
     const savedToken = localStorage.getItem('taskflow-token');
     const savedUser = localStorage.getItem('taskflow-user');
+    const skippedAuth = localStorage.getItem('taskflow-skipped');
     if (savedToken && savedUser) {
       try {
         setUser(JSON.parse(savedUser));
         setToken(savedToken);
+        setAuthResolved(true);
       } catch { /* ignore */ }
+    } else if (skippedAuth) {
+      setAuthResolved(true);
     }
     setAuthChecked(true);
   }, []);
@@ -58,16 +63,22 @@ export default function App() {
   const handleAuth = (u, t) => {
     setUser(u);
     setToken(t);
-    setAuthChecked(true);
+    setAuthResolved(true);
+    if (!u && !t) {
+      // "Continue without account" — remember the choice
+      localStorage.setItem('taskflow-skipped', '1');
+    }
   };
 
   const handleLogout = () => {
     setUser(null);
     setToken(null);
+    setAuthResolved(false);
     setTasks([]);
     setProjects([]);
     localStorage.removeItem('taskflow-token');
     localStorage.removeItem('taskflow-user');
+    localStorage.removeItem('taskflow-skipped');
   };
 
   // ── Search debounce (300ms) ──
@@ -286,7 +297,7 @@ export default function App() {
 
   // ── Auth gate ──
   if (!authChecked) return null;
-  if (authChecked && !user && token === null) {
+  if (!authResolved) {
     return <AuthPage onAuth={handleAuth} />;
   }
 
