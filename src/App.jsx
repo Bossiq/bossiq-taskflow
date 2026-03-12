@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import Board from './components/Board.jsx';
 import Dashboard from './components/Dashboard.jsx';
+import Calendar from './components/Calendar.jsx';
 import TaskModal from './components/TaskModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
 import Toast from './components/Toast.jsx';
@@ -356,9 +357,11 @@ export default function App() {
         </div>
 
         {view === 'board' ? (
-          <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} />
+          <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} />
+        ) : view === 'calendar' ? (
+          <Calendar tasks={tasks} onEdit={openEdit} />
         ) : (
-          <Dashboard refreshKey={refreshKey} />
+          <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} />
         )}
       </main>
 
@@ -367,6 +370,7 @@ export default function App() {
           task={modalTask}
           onSave={handleSaveTask}
           onClose={() => { setShowModal(false); setModalTask(null); }}
+          getHeaders={getHeaders}
         />
       )}
 

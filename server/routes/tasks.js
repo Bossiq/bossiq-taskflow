@@ -310,4 +310,40 @@ router.delete('/:id', (req, res) => {
   }
 });
 
+/**
+ * PATCH /:id/reorder — Reorder a task within its column
+ */
+router.patch('/:id/reorder', (req, res) => {
+  try {
+    const { position } = req.body;
+    if (typeof position !== 'number' || position < 0) {
+      return res.status(400).json({ error: 'Valid position is required' });
+    }
+
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    const reorder = db.transaction(() => {
+      // Get all tasks in same column, ordered by position
+      const siblings = db.prepare(
+        'SELECT id, position FROM tasks WHERE status = ? AND id != ? ORDER BY position ASC'
+      ).all(task.status, task.id);
+
+      // Insert at new position
+      siblings.splice(position, 0, { id: task.id, position });
+
+      // Update all positions
+      const update = db.prepare('UPDATE tasks SET position = ? WHERE id = ?');
+      siblings.forEach((t, i) => update.run(i, t.id));
+    });
+
+    reorder();
+
+    const updated = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

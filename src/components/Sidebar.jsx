@@ -30,17 +30,14 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
         <div className="sidebar-logo">⚡ TaskFlow</div>
       </div>
       <nav className="sidebar-nav">
-        <button
-          className={`nav-item ${!currentProject && view !== 'dashboard' ? 'active' : ''}`}
-          onClick={() => { setCurrentProject(null); setView('board'); }}
-        >
+        <button className={`nav-item ${view === 'board' ? 'active' : ''}`} onClick={() => { setCurrentProject(null); setView('board'); }}>
           📋 All Tasks
         </button>
-        <button
-          className={`nav-item ${view === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setView('dashboard')}
-        >
+        <button className={`nav-item ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>
           📊 Dashboard
+        </button>
+        <button className={`nav-item ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')}>
+          📅 Calendar
         </button>
 
         <div className="nav-section-title">

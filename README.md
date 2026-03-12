@@ -24,6 +24,8 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Dark/Light Theme** — Toggle with persistent localStorage preference
 - **Search** — Debounced full-text search across all tasks
 - **CSV Export** — Export all tasks to downloadable CSV file
+- **Calendar View** — Monthly grid with priority dots, date selection, overdue indicators
+- **Task Comments** — Threaded comment system with author display and timestamps
 - **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle dashboard, `Esc` close modal
 
 ### Production Quality
@@ -141,6 +143,10 @@ taskflow/
 | `PATCH` | `/api/tasks/batch` | Bulk move, delete, or reprioritize tasks |
 | `GET` | `/api/activity` | Recent activity feed |
 | `GET` | `/api/activity/streak` | Productivity streak (consecutive days) |
+| `GET` | `/api/tasks/:taskId/comments` | List comments for a task |
+| `POST` | `/api/tasks/:taskId/comments` | Add a comment |
+| `DELETE` | `/api/tasks/:taskId/comments/:id` | Delete a comment |
+| `PATCH` | `/api/tasks/:id/reorder` | Reorder task position within column |
 | `GET` | `/api/projects` | List projects (with task counts) |
 | `POST` | `/api/projects` | Create project |
 | `PUT` | `/api/projects/:id` | Update project |

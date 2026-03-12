@@ -18,6 +18,7 @@ import projectRoutes from './routes/projects.js';
 import subtaskRoutes from './routes/subtasks.js';
 import activityRoutes from './routes/activity.js';
 import authRoutes from './routes/auth.js';
+import commentRoutes from './routes/comments.js';
 import { optionalAuth } from './middleware/auth.js';
 import { sanitizeBody } from './middleware/sanitize.js';
 
@@ -76,6 +77,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', optionalAuth, taskRoutes);
 app.use('/api/tasks/:taskId/subtasks', optionalAuth, subtaskRoutes);
+app.use('/api/tasks/:taskId/comments', optionalAuth, commentRoutes);
 app.use('/api/projects', optionalAuth, projectRoutes);
 app.use('/api/activity', optionalAuth, activityRoutes);
 

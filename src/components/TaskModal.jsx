@@ -10,13 +10,16 @@ const API = '/api';
  *
  * @param {{ task: object|null, onSave: function, onClose: function }} props
  */
-export default function TaskModal({ task, onSave, onClose }) {
+export default function TaskModal({ task, onSave, onClose, getHeaders }) {
   const defaultForm = { title: '', description: '', priority: 'medium', label: '', due_date: '', status: 'todo' };
   const [form, setForm] = useState(defaultForm);
   const [subtasks, setSubtasks] = useState([]);
   const [newSubtask, setNewSubtask] = useState('');
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const headers = getHeaders?.() || { 'Content-Type': 'application/json' };
 
   useEffect(() => {
     if (task && task.id) {
@@ -29,13 +32,19 @@ export default function TaskModal({ task, onSave, onClose }) {
         status: task.status || 'todo'
       });
       // Fetch subtasks for existing tasks
-      fetch(`${API}/tasks/${task.id}/subtasks`)
+      fetch(`${API}/tasks/${task.id}/subtasks`, { headers })
         .then(r => r.json())
         .then(data => setSubtasks(Array.isArray(data) ? data : []))
+        .catch(() => {});
+      // Fetch comments
+      fetch(`${API}/tasks/${task.id}/comments`, { headers })
+        .then(r => r.json())
+        .then(data => setComments(Array.isArray(data) ? data : []))
         .catch(() => {});
     } else {
       setForm(defaultForm);
       setSubtasks([]);
+      setComments([]);
     }
   }, [task]);
 
@@ -203,6 +212,74 @@ export default function TaskModal({ task, onSave, onClose }) {
                     onClick={addSubtask}
                     disabled={!newSubtask.trim()}
                   >Add</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Comments section — only for existing tasks */}
+          {task?.id && (
+            <div className="form-group">
+              <label>💬 Comments ({comments.length})</label>
+              <div className="comment-thread">
+                {comments.map(c => (
+                  <div key={c.id} className="comment-item">
+                    <div className="comment-header">
+                      <span className="comment-author">{c.username || 'Anonymous'}</span>
+                      <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                      <button
+                        type="button"
+                        className="btn-icon comment-delete"
+                        onClick={async () => {
+                          await fetch(`${API}/tasks/${task.id}/comments/${c.id}`, { method: 'DELETE', headers });
+                          setComments(prev => prev.filter(x => x.id !== c.id));
+                        }}
+                        aria-label="Delete comment"
+                      >×</button>
+                    </div>
+                    <p className="comment-body">{c.content}</p>
+                  </div>
+                ))}
+                {comments.length === 0 && <p className="comment-empty">No comments yet</p>}
+                <div className="comment-add">
+                  <input
+                    className="form-input form-input-sm"
+                    placeholder="Add a comment..."
+                    value={newComment}
+                    onChange={e => setNewComment(e.target.value)}
+                    maxLength={2000}
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter' && newComment.trim()) {
+                        e.preventDefault();
+                        const res = await fetch(`${API}/tasks/${task.id}/comments`, {
+                          method: 'POST', headers,
+                          body: JSON.stringify({ content: newComment.trim() })
+                        });
+                        if (res.ok) {
+                          const c = await res.json();
+                          setComments(prev => [...prev, c]);
+                          setNewComment('');
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-ghost"
+                    disabled={!newComment.trim()}
+                    onClick={async () => {
+                      if (!newComment.trim()) return;
+                      const res = await fetch(`${API}/tasks/${task.id}/comments`, {
+                        method: 'POST', headers,
+                        body: JSON.stringify({ content: newComment.trim() })
+                      });
+                      if (res.ok) {
+                        const c = await res.json();
+                        setComments(prev => [...prev, c]);
+                        setNewComment('');
+                      }
+                    }}
+                  >Post</button>
                 </div>
               </div>
             </div>
