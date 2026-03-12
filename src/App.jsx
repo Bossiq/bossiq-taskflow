@@ -36,6 +36,7 @@ export default function App() {
   const [token, setToken] = useState(null);
   const [coldStartMsg, setColdStartMsg] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const toastIdRef = useRef(0);
 
   // ── Auth helpers ──
@@ -323,6 +324,14 @@ export default function App() {
   useEffect(() => {
     const handler = (e) => {
       if (showModal || confirmDialog) return;
+
+      // Cmd+K or Ctrl+K for search
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        document.getElementById('search-input')?.focus();
+        return;
+      }
+
       const tag = document.activeElement.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
@@ -415,7 +424,7 @@ export default function App() {
   const taskCount = tasks.length;
 
   return (
-    <div className="app">
+    <div className={`app ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <Sidebar
         view={view} setView={setView}
         projects={projects}
@@ -426,12 +435,14 @@ export default function App() {
         onExportCSV={handleExportCSV}
         user={user}
         onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
       <main className="main-content" id="main-content">
         <div className="top-bar">
           <h1>{pageTitle} {view === 'board' && <span className="header-count">{taskCount}</span>}</h1>
           <div className="search-box">
-            <span aria-hidden="true">🔍</span>
+            <span aria-hidden="true" className="search-icon">🔍</span>
             <input
               id="search-input"
               placeholder="Search tasks..."
@@ -439,8 +450,10 @@ export default function App() {
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Search tasks"
             />
-            {search && (
+            {search ? (
               <button className="btn-icon" onClick={() => setSearch('')} aria-label="Clear search" style={{ width: 24, height: 24 }}>×</button>
+            ) : (
+              <kbd className="search-shortcut">⌘K</kbd>
             )}
           </div>
           {view === 'board' && (
