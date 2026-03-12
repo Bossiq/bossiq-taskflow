@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import Sidebar from './components/Sidebar.jsx';
-import Board from './components/Board.jsx';
-import Dashboard from './components/Dashboard.jsx';
-import Calendar from './components/Calendar.jsx';
 import TaskModal from './components/TaskModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
 import Toast from './components/Toast.jsx';
 import AuthPage from './components/AuthPage.jsx';
+
+// Lazy loaded heavy components for code splitting
+const Board = lazy(() => import('./components/Board.jsx'));
+const Dashboard = lazy(() => import('./components/Dashboard.jsx'));
+const Calendar = lazy(() => import('./components/Calendar.jsx'));
 
 const API = '/api';
 
@@ -462,11 +464,17 @@ export default function App() {
         </div>
 
         {view === 'board' ? (
-          <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} />
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Board...</p></div>}>
+            <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} />
+          </Suspense>
         ) : view === 'calendar' ? (
-          <Calendar tasks={tasks} onEdit={openEdit} />
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Calendar...</p></div>}>
+            <Calendar tasks={tasks} onEdit={openEdit} />
+          </Suspense>
         ) : (
-          <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} />
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Dashboard...</p></div>}>
+            <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} />
+          </Suspense>
         )}
       </main>
 

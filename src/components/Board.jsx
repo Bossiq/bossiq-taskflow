@@ -181,9 +181,19 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
     return (
       <div className="board-empty" role="status">
         <div className="board-empty-inner">
-          <span className="board-empty-icon">📋</span>
-          <h2>No tasks yet</h2>
-          <p>Click <strong>+ New Task</strong> or press <kbd>N</kbd> to create your first task.</p>
+          <div className="board-empty-illustration">
+            <div className="empty-card" style={{ animationDelay: '0ms' }}></div>
+            <div className="empty-card" style={{ animationDelay: '150ms' }}></div>
+            <div className="empty-card" style={{ animationDelay: '300ms' }}></div>
+          </div>
+          <h2>Your board is clear</h2>
+          <p>Create your first task to start organizing your projects. Productivity awaits.</p>
+          <div className="board-empty-actions">
+            <button className="btn btn-primary btn-lg" onClick={() => document.getElementById('new-task-btn')?.click()}>
+              + Create New Task
+            </button>
+            <span className="kb-hint">Press <kbd>N</kbd> anywhere</span>
+          </div>
         </div>
       </div>
     );

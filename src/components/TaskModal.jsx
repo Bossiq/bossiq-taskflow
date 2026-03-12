@@ -132,46 +132,62 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
         aria-modal="true"
         aria-labelledby="modal-title"
       >
-        <h2 id="modal-title">{task?.id ? 'Edit Task' : 'New Task'}</h2>
+        <h2 id="modal-title" className="modal-header-title">{task?.id ? 'Edit Task' : 'New Task'}</h2>
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="task-title">Title</label>
+          <div className="form-group floating">
             <input id="task-title" className="form-input" value={form.title} onChange={set('title')}
-              placeholder="What needs to be done?" autoFocus maxLength={200} required />
+              placeholder=" " autoFocus maxLength={200} required />
+            <label htmlFor="task-title">Task Title</label>
             {form.title.length > 0 && (
               <span className={`char-counter ${form.title.length > 180 ? 'warn' : ''}`}>
                 {form.title.length}/200
               </span>
             )}
           </div>
-          <div className="form-group">
-            <label htmlFor="task-desc">Description</label>
+
+          <div className="form-group floating">
             <textarea id="task-desc" className="form-textarea" value={form.description}
-              onChange={set('description')} placeholder="Add details..." maxLength={2000} />
+              onChange={set('description')} placeholder=" " maxLength={2000} />
+            <label htmlFor="task-desc">Description</label>
             {form.description.length > 0 && (
               <span className={`char-counter ${form.description.length > 1800 ? 'warn' : ''}`}>
                 {form.description.length}/2000
               </span>
             )}
           </div>
+
           <div className="form-group">
-            <label htmlFor="task-priority">Priority</label>
-            <select id="task-priority" className="form-select" value={form.priority} onChange={set('priority')}>
-              <option value="low">🟢 Low</option>
-              <option value="medium">🔵 Medium</option>
-              <option value="high">🟡 High</option>
-              <option value="urgent">🔴 Urgent</option>
-            </select>
+            <label className="section-label">Priority</label>
+            <div className="priority-selector">
+              {[
+                { val: 'low', icon: '🟢', label: 'Low' },
+                { val: 'medium', icon: '🔵', label: 'Medium' },
+                { val: 'high', icon: '🟡', label: 'High' },
+                { val: 'urgent', icon: '🔴', label: 'Urgent' }
+              ].map(p => (
+                <button
+                  key={p.val}
+                  type="button"
+                  className={`priority-btn ${form.priority === p.val ? 'active' : ''} prio-${p.val}`}
+                  onClick={() => setForm(f => ({ ...f, priority: p.val }))}
+                >
+                  <span className="prio-icon">{p.icon}</span>
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="task-label">Label</label>
+
+          <div className="form-group floating">
             <input id="task-label" className="form-input" value={form.label} onChange={set('label')}
-              placeholder="e.g. bug, feature, docs" maxLength={50} />
+              placeholder=" " maxLength={50} />
+            <label htmlFor="task-label">Label (e.g. bug, feature)</label>
           </div>
-          <div className="form-group">
-            <label htmlFor="task-due">Due Date</label>
+
+          <div className="form-group floating">
             <input id="task-due" type="date" className="form-input" value={form.due_date}
-              onChange={set('due_date')} />
+              onChange={set('due_date')} placeholder=" " />
+            <label htmlFor="task-due" className="date-label">Due Date</label>
             <div className="date-shortcuts">
               {[
                 { label: 'Today', days: 0 },

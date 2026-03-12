@@ -33,8 +33,8 @@ describe('Board', () => {
 
   it('shows onboarding message when board is empty', () => {
     render(<Board tasks={[]} />);
-    expect(screen.getByText('No tasks yet')).toBeInTheDocument();
-    expect(screen.getByText('+ New Task')).toBeInTheDocument();
+    expect(screen.getByText('Your board is clear')).toBeInTheDocument();
+    expect(screen.getByText('+ Create New Task')).toBeInTheDocument();
   });
 
   it('has ARIA region roles on columns when tasks exist', () => {
