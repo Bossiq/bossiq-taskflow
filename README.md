@@ -2,15 +2,19 @@
 
 A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, real-time statistics dashboard, and comprehensive security hardening.
 
-![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue)
+![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg)
+
+![TaskFlow Screenshot](docs/screenshot.png)
 
 ## ✨ Features
 
 ### Core
 - **Kanban Board** — Drag-and-drop tasks between To Do, In Progress, and Done columns
 - **Full CRUD** — Create, edit, and delete tasks with title, description, priority, and labels
+- **Due Dates** — Date picker with smart display (Today, Tomorrow, Xd left) and overdue highlighting
 - **Multi-Project Support** — Create and switch between projects with color-coded sidebar
 - **Statistics Dashboard** — Completion rates, priority distribution charts, recent activity
+- **Dark/Light Theme** — Toggle with persistent localStorage preference
 - **Search** — Debounced full-text search across all tasks
 - **Keyboard Shortcuts** — Press `N` for new task, `Escape` to close modals
 
@@ -26,10 +30,12 @@ A production-grade, enterprise-ready Kanban task management application built wi
 | Layer | Technology |
 |---|---|
 | Frontend | React 18, Vite 5 |
-| Styling | Vanilla CSS (dark mode, glassmorphism) |
+| Styling | Vanilla CSS (dark/light mode, glassmorphism) |
 | Backend | Node.js, Express 4 |
 | Database | SQLite via better-sqlite3 (WAL mode) |
 | Security | Helmet, express-rate-limit, compression |
+| Testing | Vitest, React Testing Library |
+| CI/CD | GitHub Actions (Node 18 + 20 matrix) |
 | Font | Inter (Google Fonts) |
 
 ## 🚀 Quick Start
@@ -129,6 +135,8 @@ taskflow/
 | `npm run dev:client` | Start Vite dev server only |
 | `npm run dev:server` | Start Express API only |
 | `npm run build` | Build frontend for production |
+| `npm test` | Run unit tests |
+| `npm run test:watch` | Run tests in watch mode |
 
 ## ⚙️ Environment Variables
 

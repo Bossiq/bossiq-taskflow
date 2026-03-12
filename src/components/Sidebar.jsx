@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const PROJECT_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#f97316'];
 
@@ -6,6 +6,15 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState('#6366f1');
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('taskflow-theme');
+    return saved || 'dark';
+  });
+
+  // Apply saved theme on mount
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, []);
 
   const handleCreateProject = (e) => {
     e.preventDefault();
@@ -87,6 +96,18 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
       </nav>
 
       <div className="sidebar-footer">
+        <button
+          className="theme-toggle"
+          onClick={() => {
+            const next = theme === 'dark' ? 'light' : 'dark';
+            setTheme(next);
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('taskflow-theme', next);
+          }}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+        </button>
         <div className="sidebar-shortcut">
           Press <kbd>N</kbd> for new task
         </div>

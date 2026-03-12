@@ -9,7 +9,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
  * @param {{ task: object|null, onSave: function, onClose: function }} props
  */
 export default function TaskModal({ task, onSave, onClose }) {
-  const defaultForm = { title: '', description: '', priority: 'medium', label: '', status: 'todo' };
+  const defaultForm = { title: '', description: '', priority: 'medium', label: '', due_date: '', status: 'todo' };
   const [form, setForm] = useState(defaultForm);
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
@@ -21,6 +21,7 @@ export default function TaskModal({ task, onSave, onClose }) {
         description: task.description || '',
         priority: task.priority || 'medium',
         label: task.label || '',
+        due_date: task.due_date || '',
         status: task.status || 'todo'
       });
     } else {
@@ -107,6 +108,11 @@ export default function TaskModal({ task, onSave, onClose }) {
             <label htmlFor="task-label">Label</label>
             <input id="task-label" className="form-input" value={form.label} onChange={set('label')}
               placeholder="e.g. bug, feature, docs" maxLength={50} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="task-due">Due Date</label>
+            <input id="task-due" type="date" className="form-input" value={form.due_date}
+              onChange={set('due_date')} />
           </div>
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>

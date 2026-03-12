@@ -30,6 +30,9 @@ function validateTaskInput(body, requireTitle = false) {
   if (body.priority && !VALID_PRIORITIES.includes(body.priority)) {
     errors.push(`Invalid priority. Must be one of: ${VALID_PRIORITIES.join(', ')}`);
   }
+  if (body.due_date && isNaN(Date.parse(body.due_date))) {
+    errors.push('Invalid due date format');
+  }
   return errors;
 }
 
@@ -127,21 +130,22 @@ router.post('/', (req, res) => {
     const errors = validateTaskInput(req.body, true);
     if (errors.length > 0) return res.status(400).json({ error: errors.join('; ') });
 
-    const { title, description, status, priority, label, project_id } = req.body;
+    const { title, description, status, priority, label, due_date, project_id } = req.body;
 
     const maxPos = db.prepare(
       'SELECT COALESCE(MAX(position), -1) as max FROM tasks WHERE status = ?'
     ).get(status || 'todo');
 
     const result = db.prepare(`
-      INSERT INTO tasks (title, description, status, priority, label, project_id, position)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       title.trim(),
       (description || '').trim(),
       status || 'todo',
       priority || 'medium',
       (label || '').trim(),
+      due_date || null,
       project_id || 1,
       maxPos.max + 1
     );
@@ -159,7 +163,7 @@ router.put('/:id', (req, res) => {
     const errors = validateTaskInput(req.body, false);
     if (errors.length > 0) return res.status(400).json({ error: errors.join('; ') });
 
-    const { title, description, status, priority, label, project_id } = req.body;
+    const { title, description, status, priority, label, due_date, project_id } = req.body;
     const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Task not found' });
 
@@ -168,7 +172,7 @@ router.put('/:id', (req, res) => {
       : (status !== 'done' ? null : existing.completed_at);
 
     db.prepare(`
-      UPDATE tasks SET title=?, description=?, status=?, priority=?, label=?, project_id=?,
+      UPDATE tasks SET title=?, description=?, status=?, priority=?, label=?, due_date=?, project_id=?,
         updated_at=CURRENT_TIMESTAMP, completed_at=?
       WHERE id=?
     `).run(
@@ -177,6 +181,7 @@ router.put('/:id', (req, res) => {
       status ?? existing.status,
       priority ?? existing.priority,
       (label ?? existing.label).trim(),
+      due_date !== undefined ? (due_date || null) : existing.due_date,
       project_id ?? existing.project_id,
       completedAt,
       req.params.id

@@ -30,6 +30,7 @@ db.exec(`
     status TEXT DEFAULT 'todo' CHECK(status IN ('todo','inprogress','done')),
     priority TEXT DEFAULT 'medium' CHECK(priority IN ('low','medium','high','urgent')),
     label TEXT DEFAULT '',
+    due_date TEXT,
     project_id INTEGER,
     position INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -41,5 +42,12 @@ db.exec(`
   -- Seed a default project if none exist
   INSERT OR IGNORE INTO projects (id, name, color) VALUES (1, 'My Project', '#6366f1');
 `);
+
+// Migration: add due_date to existing databases that don't have it
+try {
+  db.prepare("SELECT due_date FROM tasks LIMIT 1").get();
+} catch {
+  db.exec("ALTER TABLE tasks ADD COLUMN due_date TEXT");
+}
 
 export default db;
