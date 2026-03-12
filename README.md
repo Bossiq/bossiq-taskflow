@@ -148,6 +148,35 @@ See [`.env.example`](.env.example) for all available variables.
 | `NODE_ENV` | `development` | Environment (`production` enables strict security) |
 | `ALLOWED_ORIGIN` | `*` | CORS allowed origin in production |
 
+## 🧪 Testing
+
+40 tests across 4 suites covering frontend components and backend API:
+
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+```
+
+| Suite | Tests | Coverage |
+|---|---|---|
+| Backend API | 21 | Health, 404, project CRUD, task CRUD, validation, stats |
+| Board | 6 | Columns, sorting, empty states, ARIA |
+| TaskCard | 8 | Render, overdue, draggable, description |
+| Toast | 5 | Render, icons, auto-dismiss |
+
+## 🚀 Deploy (Free Tier)
+
+### Frontend → Vercel
+1. Push to GitHub
+2. Import repo on [vercel.com](https://vercel.com)
+3. Update `vercel.json` with your Render backend URL
+
+### Backend → Render
+1. Create a new Web Service on [render.com](https://render.com)
+2. Connect the same repo
+3. Render will use `render.yaml` automatically
+4. Update `ALLOWED_ORIGIN` with your Vercel URL
+
 ## 📝 License
 
 [MIT](LICENSE)
