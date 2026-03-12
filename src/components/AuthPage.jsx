@@ -54,97 +54,135 @@ export default function AuthPage({ onAuth }) {
     onAuth(null, null);
   };
 
+  const handleTabSwitch = (newMode) => {
+    setMode(newMode);
+    setError('');
+    // Clear credentials to prevent accidental submissions with old data
+    setForm({ username: '', email: '', password: '' });
+  };
+
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-header">
-          <span className="auth-logo">⚡</span>
-          <h1>TaskFlow</h1>
-          <p className="auth-subtitle">
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+    <div className="auth-split-layout">
+      {/* Left side: Premium Branding */}
+      <div className="auth-branding">
+        <div className="auth-branding-content">
+          <div className="auth-branding-logo">
+            <span className="auth-logo-icon">⚡</span>
+            <span>TaskFlow</span>
+          </div>
+          <h2 className="auth-branding-title">Manage your work.<br/>Master your time.</h2>
+          <p className="auth-branding-desc">
+            Join thousands of professionals organizing projects with the most intuitive Kanban experience.
           </p>
+          <div className="auth-branding-stats">
+            <div className="stat"><strong>10k+</strong> Users</div>
+            <div className="stat"><strong>99.9%</strong> Uptime</div>
+            <div className="stat"><strong>0</strong> Setup</div>
+          </div>
         </div>
+        <div className="auth-branding-bg-accent"></div>
+      </div>
 
-        <div className="auth-tabs">
-          <button
-            className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-            onClick={() => { setMode('login'); setError(''); }}
-          >
-            Sign In
-          </button>
-          <button
-            className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-            onClick={() => { setMode('register'); setError(''); }}
-          >
-            Sign Up
-          </button>
-        </div>
+      {/* Right side: Form */}
+      <div className="auth-form-container">
+        <div className="auth-form-wrapper">
+          <div className="auth-header-mobile">
+            <span className="auth-logo-icon">⚡</span> TaskFlow
+          </div>
+          
+          <h1 className="auth-form-title">
+            {mode === 'login' ? 'Welcome back' : 'Create an account'}
+          </h1>
+          <p className="auth-form-subtitle">
+            {mode === 'login' ? 'Enter your details to access your board.' : 'Start organizing your tasks in seconds.'}
+          </p>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="auth-username">Username</label>
-            <input
-              id="auth-username"
-              className="form-input"
-              value={form.username}
-              onChange={set('username')}
-              placeholder="Enter username"
-              required
-              autoFocus
-              autoComplete="username"
-            />
+          <div className="auth-tabs">
+            <button
+              className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+              onClick={() => handleTabSwitch('login')}
+            >
+              Sign In
+            </button>
+            <button
+              className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
+              onClick={() => handleTabSwitch('register')}
+            >
+              Sign Up
+            </button>
+            <div className="auth-tab-indicator" style={{ left: mode === 'login' ? '0%' : '50%' }} />
           </div>
 
-          {mode === 'register' && (
-            <div className="form-group">
-              <label htmlFor="auth-email">Email</label>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group floating">
               <input
-                id="auth-email"
-                type="email"
+                id="auth-username"
                 className="form-input"
-                value={form.email}
-                onChange={set('email')}
-                placeholder="you@example.com"
+                value={form.username}
+                onChange={set('username')}
+                placeholder=" "
                 required
-                autoComplete="email"
+                autoFocus
+                autoComplete="username"
               />
+              <label htmlFor="auth-username">Username</label>
             </div>
-          )}
 
-          <div className="form-group">
-            <label htmlFor="auth-password">Password</label>
-            <div className="password-wrapper">
-              <input
-                id="auth-password"
-                type={showPw ? 'text' : 'password'}
-                className="form-input"
-                value={form.password}
-                onChange={set('password')}
-                placeholder={mode === 'register' ? 'At least 6 characters' : 'Enter password'}
-                required
-                minLength={mode === 'register' ? 6 : undefined}
-                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-              />
-              <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
-                {showPw ? '🙈' : '👁️'}
-              </button>
+            {mode === 'register' && (
+              <div className="form-group floating">
+                <input
+                  id="auth-email"
+                  type="email"
+                  className="form-input"
+                  value={form.email}
+                  onChange={set('email')}
+                  placeholder=" "
+                  required
+                  autoComplete="email"
+                />
+                <label htmlFor="auth-email">Email</label>
+              </div>
+            )}
+
+            <div className="form-group floating">
+              <div className="password-wrapper">
+                <input
+                  id="auth-password"
+                  type={showPw ? 'text' : 'password'}
+                  className="form-input"
+                  value={form.password}
+                  onChange={set('password')}
+                  placeholder=" "
+                  required
+                  minLength={mode === 'register' ? 6 : undefined}
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                />
+                <label htmlFor="auth-password">Password</label>
+                <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
+                  {showPw ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
+
+            {error && (
+              <div className="auth-error" role="alert">
+                ⚠️ {error}
+              </div>
+            )}
+
+            <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+              {loading ? '...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+            </button>
+          </form>
+
+          <div className="auth-divider">
+            <span>or</span>
           </div>
 
-          {error && (
-            <div className="auth-error" role="alert">
-              ⚠️ {error}
-            </div>
-          )}
-
-          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-            {loading ? '...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+          <button className="btn btn-ghost auth-skip" onClick={handleSkip}>
+            Continue as Guest →
           </button>
-        </form>
-
-        <button className="auth-skip" onClick={handleSkip}>
-          Continue without account →
-        </button>
+        </div>
       </div>
     </div>
   );
