@@ -38,7 +38,7 @@ app.use(compression());
 app.use(cors({
   origin: IS_PROD ? process.env.ALLOWED_ORIGIN : '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // ── Body parsing with size limit ──

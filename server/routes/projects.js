@@ -6,10 +6,13 @@ const router = Router();
 const MAX_NAME_LEN = 100;
 const COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
 
-// GET all projects
 router.get('/', (req, res) => {
   try {
-    const projects = db.prepare('SELECT * FROM projects ORDER BY created_at DESC').all();
+    const userId = req.user?.id;
+    const baseQuery = userId
+      ? 'SELECT * FROM projects WHERE user_id = ? OR user_id IS NULL ORDER BY created_at DESC'
+      : 'SELECT * FROM projects WHERE user_id IS NULL ORDER BY created_at DESC';
+    const projects = userId ? db.prepare(baseQuery).all(userId) : db.prepare(baseQuery).all();
     const withCounts = projects.map(p => {
       const counts = db.prepare(
         'SELECT status, COUNT(*) as count FROM tasks WHERE project_id = ? GROUP BY status'
@@ -37,9 +40,10 @@ router.post('/', (req, res) => {
     if (name.length > MAX_NAME_LEN) return res.status(400).json({ error: `Name must be ${MAX_NAME_LEN} characters or less` });
     if (color && !COLOR_REGEX.test(color)) return res.status(400).json({ error: 'Color must be a valid hex color (e.g. #6366f1)' });
 
+    const userId = req.user?.id || null;
     const result = db.prepare(
-      'INSERT INTO projects (name, color) VALUES (?, ?)'
-    ).run(name.trim(), color || '#6366f1');
+      'INSERT INTO projects (name, color, user_id) VALUES (?, ?, ?)'
+    ).run(name.trim(), color || '#6366f1', userId);
 
     const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(project);

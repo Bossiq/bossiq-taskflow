@@ -83,13 +83,15 @@ taskflow/
 ├── src/
 │   ├── main.jsx                # React entry (wrapped in ErrorBoundary)
 │   ├── App.jsx                 # Main app shell + state management
-│   ├── index.css               # Design system (1100+ lines)
+│   ├── index.css               # Design system (1600+ lines)
 │   └── components/
 │       ├── Board.jsx           # Kanban board (ARIA regions, drag-and-drop)
 │       ├── TaskCard.jsx        # Task card (progress bar, timeAgo, drag)
-│       ├── TaskModal.jsx       # Create/edit modal (subtask checklist)
+│       ├── TaskModal.jsx       # Create/edit modal (subtask checklist, comments)
 │       ├── Sidebar.jsx         # Navigation + project management
 │       ├── Dashboard.jsx       # Statistics, overdue warnings, shortcuts
+│       ├── Calendar.jsx        # Monthly calendar view with task dots
+│       ├── AuthPage.jsx        # Login/register with glassmorphism UI
 │       ├── ConfirmDialog.jsx   # Confirmation dialog (role=alertdialog)
 │       ├── Toast.jsx           # Toast notifications (auto-dismiss)
 │       ├── ErrorBoundary.jsx   # React error catcher with retry
@@ -97,15 +99,19 @@ taskflow/
 └── server/
     ├── index.js                # Express entry point
     ├── app.js                  # Express app config (Helmet, rate limit, compression)
-    ├── db.js                   # SQLite setup + schema (projects, tasks, subtasks)
+    ├── db.js                   # SQLite setup + schema (users, projects, tasks, subtasks, comments, activity)
     ├── middleware/
+    │   ├── auth.js              # JWT authentication middleware (require/optional)
     │   └── sanitize.js         # XSS sanitization middleware
     ├── routes/
-    │   ├── tasks.js            # Task CRUD API (validated, enriched with subtask counts)
-    │   ├── projects.js         # Project CRUD API (validated)
-    │   └── subtasks.js         # Subtask CRUD API (create, toggle, update, delete)
+    │   ├── auth.js              # Auth API (register, login, /me)
+    │   ├── tasks.js            # Task CRUD API (move, batch, reorder, stats)
+    │   ├── projects.js         # Project CRUD API (user-scoped)
+    │   ├── subtasks.js         # Subtask CRUD API (create, toggle, update, delete)
+    │   ├── comments.js         # Comment CRUD API (add, list, delete)
+    │   └── activity.js         # Activity feed + streak API
     └── __tests__/
-        └── api.test.js         # 31 backend API tests (Supertest)
+        └── api.test.js         # 46 backend API tests (Supertest)
 ```
 
 ## 🔒 Security Features
@@ -113,11 +119,13 @@ taskflow/
 | Feature | Implementation |
 |---|---|
 | HTTP Headers | `helmet()` — CSP, HSTS, X-Frame-Options, X-Content-Type-Options |
+| Authentication | JWT tokens (7-day expiry), bcrypt password hashing (12 rounds) |
 | Rate Limiting | 100 requests per 15 minutes per IP (configurable) |
 | XSS Prevention | HTML tag stripping on all request body fields |
 | Input Validation | Length limits, enum checks, required fields |
-| CORS | Configurable allowed origins via `ALLOWED_ORIGIN` env var |
+| CORS | Configurable allowed origins + Authorization header |
 | SQL Injection | Parameterized queries throughout |
+| User Isolation | Tasks, projects, activity scoped by user_id |
 | Request Tracing | `X-Request-Id` header on every response |
 | Error Masking | Stack traces hidden in production |
 
@@ -175,7 +183,7 @@ taskflow/
 | `npm run dev:server` | Start Express API with nodemon (hot reload) |
 | `npm start` | Start Express API for production |
 | `npm run build` | Build frontend for production |
-| `npm test` | Run all 50 tests |
+| `npm test` | Run all 65 tests |
 | `npm run test:watch` | Run tests in watch mode |
 
 ## ⚙️ Environment Variables
@@ -191,7 +199,7 @@ See [`.env.example`](.env.example) for all available variables.
 
 ## 🧪 Testing
 
-50 tests across 4 suites covering frontend components and backend API:
+65 tests across 4 suites covering frontend components and backend API:
 
 ```bash
 npm test              # Run all tests
@@ -200,7 +208,7 @@ npm run test:watch    # Watch mode
 
 | Suite | Tests | Coverage |
 |---|---|---|
-| Backend API | 31 | Health, 404, project CRUD, task CRUD, subtask CRUD, validation, stats |
+| Backend API | 46 | Health, 404, task CRUD, project CRUD, subtask CRUD, auth, comments, reorder |
 | Board | 6 | Columns, sorting, empty states, ARIA |
 | TaskCard | 8 | Render, overdue, draggable, description |
 | Toast | 5 | Render, icons, auto-dismiss |

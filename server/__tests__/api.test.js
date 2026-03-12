@@ -294,7 +294,8 @@ describe('API', () => {
   // ── Authentication ──
   describe('Auth', () => {
     let authToken;
-    const testUser = { username: 'testauth', email: 'test@auth.com', password: 'password123' };
+    const suffix = Date.now().toString(36);
+    const testUser = { username: `tst${suffix}`, email: `tst${suffix}@test.com`, password: 'password123' };
 
     it('registers a new user', async () => {
       const res = await request(app).post('/api/auth/register').send(testUser);
