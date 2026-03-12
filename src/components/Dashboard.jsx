@@ -16,6 +16,7 @@ function timeAgo(dateStr) {
 export default function Dashboard({ refreshKey }) {
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
+  const [overdue, setOverdue] = useState([]);
 
   useEffect(() => {
     fetch('/api/tasks/stats/summary')
@@ -25,6 +26,18 @@ export default function Dashboard({ refreshKey }) {
     fetch('/api/tasks/recent/completed?limit=5')
       .then(r => r.json())
       .then(data => setRecent(Array.isArray(data) ? data : []))
+      .catch(() => {});
+    // Fetch overdue tasks
+    fetch('/api/tasks')
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        setOverdue(data.filter(t =>
+          t.due_date && t.status !== 'done' && new Date(t.due_date) < today
+        ));
+      })
       .catch(() => {});
   }, [refreshKey]);
 
@@ -48,6 +61,23 @@ export default function Dashboard({ refreshKey }) {
 
   return (
     <div className="dashboard">
+      {overdue.length > 0 && (
+        <div className="overdue-banner" role="alert">
+          <span className="overdue-icon">🔥</span>
+          <div>
+            <strong>{overdue.length} overdue task{overdue.length > 1 ? 's' : ''}</strong>
+            <div className="overdue-list">
+              {overdue.slice(0, 3).map(t => (
+                <span key={t.id} className="overdue-tag">
+                  {t.title} <small>({new Date(t.due_date + 'T00:00:00').toLocaleDateString()})</small>
+                </span>
+              ))}
+              {overdue.length > 3 && <span className="overdue-tag">+{overdue.length - 3} more</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-value">{stats.total}</div>
@@ -116,6 +146,16 @@ export default function Dashboard({ refreshKey }) {
           </div>
         </div>
       )}
+
+      <div className="shortcuts-help">
+        <h3>⌨️ Keyboard Shortcuts</h3>
+        <div className="shortcut-grid">
+          <kbd>N</kbd> <span>New task</span>
+          <kbd>/</kbd> <span>Focus search</span>
+          <kbd>D</kbd> <span>Toggle dashboard</span>
+          <kbd>Esc</kbd> <span>Close modal</span>
+        </div>
+      </div>
     </div>
   );
 }

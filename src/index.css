@@ -1034,6 +1034,83 @@ input[type="date"].form-input {
 }
 .subtask-add .form-input { flex: 1; }
 
+/* ===== OVERDUE BANNER ===== */
+.overdue-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  animation: slideDown 0.3s ease;
+}
+.overdue-icon { font-size: 1.5rem; }
+.overdue-banner strong { color: #fb7185; font-size: 0.95rem; }
+.overdue-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.overdue-tag {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  background: rgba(239,68,68,0.1);
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+.overdue-tag small { opacity: 0.7; }
+
+/* ===== KEYBOARD SHORTCUTS HELP ===== */
+.shortcuts-help {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+.shortcuts-help h3 { margin: 0 0 12px 0; font-size: 0.95rem; }
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 8px 12px;
+  align-items: center;
+}
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.shortcut-grid span { font-size: 0.8rem; color: var(--text-muted); }
+
+/* ===== DRAG-DROP ANIMATIONS ===== */
+.task-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.task-card[draggable="true"]:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+  box-shadow: 0 12px 32px rgba(99,102,241,0.3);
+  cursor: grabbing;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 768px) {
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 50; transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
@@ -1042,4 +1119,5 @@ input[type="date"].form-input {
   .column { min-width: 260px; }
   .toast-container { left: 12px; right: 12px; bottom: 12px; }
   .toast { min-width: auto; }
+  .shortcut-grid { grid-template-columns: auto 1fr; }
 }

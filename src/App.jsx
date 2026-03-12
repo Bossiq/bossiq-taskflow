@@ -229,6 +229,14 @@ export default function App() {
         e.preventDefault();
         openNew();
       }
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        document.getElementById('search-input')?.focus();
+      }
+      if (e.key === 'd' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setView(v => v === 'dashboard' ? 'board' : 'dashboard');
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
