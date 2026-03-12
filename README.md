@@ -1,10 +1,10 @@
 # ⚡ TaskFlow — Full-Stack Kanban Task Tracker
 
-A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, real-time statistics dashboard, and comprehensive security hardening.
+A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, real-time statistics dashboard, subtask checklists, and comprehensive security hardening.
 
 🔗 **[Live Demo → bossiq-taskflow.vercel.app](https://bossiq-taskflow.vercel.app)**
 
-![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black)
+![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black) ![Tests](https://img.shields.io/badge/tests-50_passing-brightgreen)
 
 ![TaskFlow Screenshot](docs/screenshot.png)
 
@@ -13,18 +13,22 @@ A production-grade, enterprise-ready Kanban task management application built wi
 ### Core
 - **Kanban Board** — Drag-and-drop tasks between To Do, In Progress, and Done columns
 - **Full CRUD** — Create, edit, and delete tasks with title, description, priority, and labels
+- **Subtask Checklists** — Add, toggle, and delete subtasks with progress bar on task cards
 - **Due Dates** — Date picker with smart display (Today, Tomorrow, Xd left) and overdue highlighting
 - **Multi-Project Support** — Create and switch between projects with color-coded sidebar
-- **Statistics Dashboard** — Completion rates, priority distribution charts, recent activity
+- **Task Sorting** — Sort by priority, due date, newest, oldest, or alphabetically
+- **Statistics Dashboard** — Completion rates, priority distribution charts, overdue warnings, recent activity
 - **Dark/Light Theme** — Toggle with persistent localStorage preference
 - **Search** — Debounced full-text search across all tasks
-- **Keyboard Shortcuts** — Press `N` for new task, `Escape` to close modals
+- **CSV Export** — Export all tasks to downloadable CSV file
+- **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle dashboard, `Esc` close modal
 
 ### Production Quality
 - **🔒 Security** — Helmet.js headers, rate limiting, XSS sanitization, CORS config
 - **♿ Accessibility** — ARIA roles, focus traps, skip-to-content, screen reader support
 - **⚡ Performance** — Gzip compression, search debouncing, WAL-mode SQLite
 - **🛡️ Error Handling** — React Error Boundary, global Express error handler, toast notifications
+- **📱 PWA** — Web manifest, service worker, installable on mobile and desktop
 - **📱 Responsive** — Works on desktop, tablet, and mobile
 
 ## 🛠️ Tech Stack
@@ -36,8 +40,9 @@ A production-grade, enterprise-ready Kanban task management application built wi
 | Backend | Node.js, Express 4 |
 | Database | SQLite via better-sqlite3 (WAL mode) |
 | Security | Helmet, express-rate-limit, compression |
-| Testing | Vitest, React Testing Library |
+| Testing | Vitest, React Testing Library, Supertest |
 | CI/CD | GitHub Actions (Node 18 + 20 matrix) |
+| Hosting | Vercel (frontend) + Render (backend) |
 | Font | Inter (Google Fonts) |
 
 ## 🚀 Quick Start
@@ -58,32 +63,43 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 taskflow/
 ├── index.html                  # Entry HTML with SEO meta + skip-to-content
 ├── package.json                # Dependencies & scripts
-├── vite.config.js              # Vite config with API proxy
+├── vite.config.js              # Vite config with API proxy + test config
+├── vercel.json                 # Vercel deployment config (API proxy to Render)
+├── render.yaml                 # Render deployment config (free tier)
 ├── .editorconfig               # Consistent coding styles
+├── .gitattributes              # GitHub linguist overrides
 ├── .env.example                # Environment variable documentation
-├── .gitignore                  # Git ignore rules
 ├── LICENSE                     # MIT License
+├── public/
+│   ├── manifest.json           # PWA manifest
+│   ├── sw.js                   # Service worker
+│   └── icons/                  # PWA icons (192 + 512)
 ├── src/
 │   ├── main.jsx                # React entry (wrapped in ErrorBoundary)
 │   ├── App.jsx                 # Main app shell + state management
-│   ├── index.css               # Design system (900+ lines)
+│   ├── index.css               # Design system (1100+ lines)
 │   └── components/
 │       ├── Board.jsx           # Kanban board (ARIA regions, drag-and-drop)
-│       ├── TaskCard.jsx        # Task card (ARIA labels, timeAgo)
-│       ├── TaskModal.jsx       # Create/edit modal (focus trap, ARIA dialog)
+│       ├── TaskCard.jsx        # Task card (progress bar, timeAgo, drag)
+│       ├── TaskModal.jsx       # Create/edit modal (subtask checklist)
+│       ├── Sidebar.jsx         # Navigation + project management
+│       ├── Dashboard.jsx       # Statistics, overdue warnings, shortcuts
 │       ├── ConfirmDialog.jsx   # Confirmation dialog (role=alertdialog)
 │       ├── Toast.jsx           # Toast notifications (auto-dismiss)
-│       ├── Sidebar.jsx         # Navigation + project creation
-│       ├── Dashboard.jsx       # Statistics + recent activity
-│       └── ErrorBoundary.jsx   # React error catcher with retry
+│       ├── ErrorBoundary.jsx   # React error catcher with retry
+│       └── __tests__/          # Component tests (Board, TaskCard, Toast)
 └── server/
-    ├── index.js                # Express entry (Helmet, rate limit, compression)
-    ├── db.js                   # SQLite setup + schema
+    ├── index.js                # Express entry point
+    ├── app.js                  # Express app config (Helmet, rate limit, compression)
+    ├── db.js                   # SQLite setup + schema (projects, tasks, subtasks)
     ├── middleware/
     │   └── sanitize.js         # XSS sanitization middleware
-    └── routes/
-        ├── tasks.js            # Task CRUD API (validated + paginated)
-        └── projects.js         # Project CRUD API (validated)
+    ├── routes/
+    │   ├── tasks.js            # Task CRUD API (validated, enriched with subtask counts)
+    │   ├── projects.js         # Project CRUD API (validated)
+    │   └── subtasks.js         # Subtask CRUD API (create, toggle, update, delete)
+    └── __tests__/
+        └── api.test.js         # 31 backend API tests (Supertest)
 ```
 
 ## 🔒 Security Features
@@ -110,6 +126,11 @@ taskflow/
 | `DELETE` | `/api/tasks/:id` | Delete task |
 | `GET` | `/api/tasks/stats/summary` | Task statistics |
 | `GET` | `/api/tasks/recent/completed` | Recently completed tasks |
+| `GET` | `/api/tasks/:taskId/subtasks` | List subtasks for a task |
+| `POST` | `/api/tasks/:taskId/subtasks` | Create subtask |
+| `PATCH` | `/api/tasks/:taskId/subtasks/:id/toggle` | Toggle subtask completion |
+| `PUT` | `/api/tasks/:taskId/subtasks/:id` | Update subtask title |
+| `DELETE` | `/api/tasks/:taskId/subtasks/:id` | Delete subtask |
 | `GET` | `/api/projects` | List projects (with task counts) |
 | `POST` | `/api/projects` | Create project |
 | `PUT` | `/api/projects/:id` | Update project |
@@ -135,9 +156,10 @@ taskflow/
 |---|---|
 | `npm run dev` | Start frontend + backend concurrently |
 | `npm run dev:client` | Start Vite dev server only |
-| `npm run dev:server` | Start Express API only |
+| `npm run dev:server` | Start Express API with nodemon (hot reload) |
+| `npm start` | Start Express API for production |
 | `npm run build` | Build frontend for production |
-| `npm test` | Run unit tests |
+| `npm test` | Run all 50 tests |
 | `npm run test:watch` | Run tests in watch mode |
 
 ## ⚙️ Environment Variables
@@ -152,7 +174,7 @@ See [`.env.example`](.env.example) for all available variables.
 
 ## 🧪 Testing
 
-40 tests across 4 suites covering frontend components and backend API:
+50 tests across 4 suites covering frontend components and backend API:
 
 ```bash
 npm test              # Run all tests
@@ -161,23 +183,23 @@ npm run test:watch    # Watch mode
 
 | Suite | Tests | Coverage |
 |---|---|---|
-| Backend API | 21 | Health, 404, project CRUD, task CRUD, validation, stats |
+| Backend API | 31 | Health, 404, project CRUD, task CRUD, subtask CRUD, validation, stats |
 | Board | 6 | Columns, sorting, empty states, ARIA |
 | TaskCard | 8 | Render, overdue, draggable, description |
 | Toast | 5 | Render, icons, auto-dismiss |
 
-## 🚀 Deploy (Free Tier)
+## 🚀 Deployment
 
-### Frontend → Vercel
+### Frontend → [Vercel](https://vercel.com) (Free)
 1. Push to GitHub
 2. Import repo on [vercel.com](https://vercel.com)
 3. Update `vercel.json` with your Render backend URL
 
-### Backend → Render
+### Backend → [Render](https://render.com) (Free)
 1. Create a new Web Service on [render.com](https://render.com)
 2. Connect the same repo
-3. Render will use `render.yaml` automatically
-4. Update `ALLOWED_ORIGIN` with your Vercel URL
+3. Set Build Command to `npm install` and Start Command to `node server/index.js`
+4. Add env vars: `NODE_ENV=production`, `ALLOWED_ORIGIN=https://your-vercel-url.vercel.app`
 
 ## 📝 License
 

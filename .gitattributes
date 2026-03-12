@@ -1,0 +1,8 @@
+# GitHub Linguist Overrides
+# Tell GitHub that JSX is JavaScript (React framework)
+*.jsx linguist-language=JavaScript
+
+# Exclude generated/vendored files from language stats
+package-lock.json linguist-generated=true
+dist/** linguist-generated=true
+public/sw.js linguist-generated=true
