@@ -57,7 +57,7 @@ function sortTasks(tasks, sortBy) {
 /**
  * Board — Kanban board with drag-and-drop, filtering, sorting, and batch actions.
  */
-export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, addToast }) {
+export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, addToast, getHeaders }) {
   const [sortBy, setSortBy] = useState(() => {
     try { return localStorage.getItem('taskflow-sort') || 'priority'; }
     catch { return 'priority'; }
@@ -105,7 +105,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
     try {
       const res = await fetch('/api/tasks/batch', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders?.() || { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: [...selectedIds], action, value })
       });
       if (res.ok) {
@@ -144,9 +144,26 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
       const task = JSON.parse(e.dataTransfer.getData('text/plain'));
       if (task.status !== status) {
         onMove?.(task.id, status);
+      } else {
+        // Same-column drop — reorder
+        const column = e.currentTarget;
+        const cards = column.querySelectorAll('.task-card');
+        let position = cards.length;
+        for (let i = 0; i < cards.length; i++) {
+          const rect = cards[i].getBoundingClientRect();
+          if (e.clientY < rect.top + rect.height / 2) {
+            position = i;
+            break;
+          }
+        }
+        fetch(`/api/tasks/${task.id}/reorder`, {
+          method: 'PATCH',
+          headers: getHeaders?.() || { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ position })
+        }).then(() => onBatchAction?.()).catch(() => {});
       }
     } catch (_) { /* ignore */ }
-  }, [onMove]);
+  }, [onMove, getHeaders, onBatchAction]);
 
   // Apply filters then sort
   const filteredAndSorted = useMemo(() => {

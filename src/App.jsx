@@ -67,6 +67,9 @@ export default function App() {
     if (!u && !t) {
       // "Continue without account" — remember the choice
       localStorage.setItem('taskflow-skipped', '1');
+    } else {
+      // Real login — clear skip flag
+      localStorage.removeItem('taskflow-skipped');
     }
   };
 
@@ -195,10 +198,35 @@ export default function App() {
         headers: getHeaders(),
         body: JSON.stringify({ status })
       });
+      if (status === 'done') {
+        addToast('🎉 Task completed!');
+        spawnConfetti();
+      }
       triggerRefresh();
     } catch {
       addToast('Failed to move task', 'error');
     }
+  };
+
+  /** Spawn confetti particles on task completion */
+  const spawnConfetti = () => {
+    const colors = ['#6366f1', '#22c55e', '#fbbf24', '#fb7185', '#a5b4fc', '#f472b6'];
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+    for (let i = 0; i < 30; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'confetti-particle';
+      particle.style.setProperty('--x', `${(Math.random() - 0.5) * 600}px`);
+      particle.style.setProperty('--y', `${-Math.random() * 500 - 100}px`);
+      particle.style.setProperty('--r', `${Math.random() * 720 - 360}deg`);
+      particle.style.setProperty('--d', `${0.6 + Math.random() * 0.6}s`);
+      particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+      particle.style.left = `${40 + Math.random() * 20}%`;
+      particle.style.top = '60%';
+      container.appendChild(particle);
+    }
+    setTimeout(() => container.remove(), 1500);
   };
 
   // ── Project creation ──

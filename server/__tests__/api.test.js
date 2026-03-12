@@ -290,4 +290,132 @@ describe('API', () => {
       expect(parent).toHaveProperty('subtask_done');
     });
   });
+
+  // ── Authentication ──
+  describe('Auth', () => {
+    let authToken;
+    const testUser = { username: 'testauth', email: 'test@auth.com', password: 'password123' };
+
+    it('registers a new user', async () => {
+      const res = await request(app).post('/api/auth/register').send(testUser);
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('token');
+      expect(res.body.user.username).toBe(testUser.username);
+      authToken = res.body.token;
+    });
+
+    it('rejects duplicate username', async () => {
+      const res = await request(app).post('/api/auth/register')
+        .send({ ...testUser, email: 'other@test.com' });
+      expect(res.status).toBe(409);
+    });
+
+    it('rejects short password', async () => {
+      const res = await request(app).post('/api/auth/register')
+        .send({ username: 'short', email: 'short@t.com', password: '12' });
+      expect(res.status).toBe(400);
+    });
+
+    it('logs in with valid credentials', async () => {
+      const res = await request(app).post('/api/auth/login')
+        .send({ username: testUser.username, password: testUser.password });
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('token');
+    });
+
+    it('rejects wrong password', async () => {
+      const res = await request(app).post('/api/auth/login')
+        .send({ username: testUser.username, password: 'wrong' });
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects nonexistent user', async () => {
+      const res = await request(app).post('/api/auth/login')
+        .send({ username: 'nouser999', password: 'test' });
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /me returns user with valid token', async () => {
+      const res = await request(app).get('/api/auth/me')
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body.username).toBe(testUser.username);
+    });
+
+    it('GET /me returns 401 without token', async () => {
+      const res = await request(app).get('/api/auth/me');
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ── Comments ──
+  describe('Comments', () => {
+    let taskId;
+    let commentId;
+
+    beforeAll(async () => {
+      const res = await request(app).post('/api/tasks').send({
+        title: 'Comment test task', priority: 'medium', status: 'todo'
+      });
+      taskId = res.body.id;
+    });
+
+    it('adds a comment', async () => {
+      const res = await request(app).post(`/api/tasks/${taskId}/comments`)
+        .send({ content: 'This is a test comment' });
+      expect(res.status).toBe(201);
+      expect(res.body.content).toBe('This is a test comment');
+      commentId = res.body.id;
+    });
+
+    it('lists comments', async () => {
+      const res = await request(app).get(`/api/tasks/${taskId}/comments`);
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('rejects empty comment', async () => {
+      const res = await request(app).post(`/api/tasks/${taskId}/comments`)
+        .send({ content: '' });
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects comment on nonexistent task', async () => {
+      const res = await request(app).post('/api/tasks/999999/comments')
+        .send({ content: 'Ghost comment' });
+      expect(res.status).toBe(404);
+    });
+
+    it('deletes a comment', async () => {
+      const res = await request(app).delete(`/api/tasks/${taskId}/comments/${commentId}`);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+  });
+
+  // ── Task Reorder ──
+  describe('Task Reorder', () => {
+    let taskId;
+
+    beforeAll(async () => {
+      const res = await request(app).post('/api/tasks').send({
+        title: 'Reorder test', priority: 'low', status: 'todo'
+      });
+      taskId = res.body.id;
+    });
+
+    it('reorders task to new position', async () => {
+      const res = await request(app).patch(`/api/tasks/${taskId}/reorder`)
+        .send({ position: 0 });
+      expect(res.status).toBe(200);
+      expect(res.body.position).toBe(0);
+    });
+
+    it('rejects invalid position', async () => {
+      const res = await request(app).patch(`/api/tasks/${taskId}/reorder`)
+        .send({ position: -5 });
+      expect(res.status).toBe(400);
+    });
+  });
 });

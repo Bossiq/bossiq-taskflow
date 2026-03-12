@@ -33,26 +33,27 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-export default function Dashboard({ refreshKey }) {
+export default function Dashboard({ refreshKey, getHeaders }) {
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
   const [streak, setStreak] = useState(0);
   const [overdue, setOverdue] = useState([]);
+  const headers = getHeaders?.() || {};
 
   useEffect(() => {
-    fetch('/api/tasks/stats/summary')
+    fetch('/api/tasks/stats/summary', { headers })
       .then(r => r.json())
       .then(setStats)
       .catch(() => {});
-    fetch('/api/activity?limit=15')
+    fetch('/api/activity?limit=15', { headers })
       .then(r => r.json())
       .then(data => setActivity(Array.isArray(data) ? data : []))
       .catch(() => {});
-    fetch('/api/activity/streak')
+    fetch('/api/activity/streak', { headers })
       .then(r => r.json())
       .then(data => setStreak(data?.streak || 0))
       .catch(() => {});
-    fetch('/api/tasks')
+    fetch('/api/tasks', { headers })
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data)) return;

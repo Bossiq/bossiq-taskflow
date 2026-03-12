@@ -4,7 +4,7 @@ A production-grade, enterprise-ready Kanban task management application built wi
 
 🔗 **[Live Demo → bossiq-taskflow.vercel.app](https://bossiq-taskflow.vercel.app)**
 
-![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black) ![Tests](https://img.shields.io/badge/tests-50_passing-brightgreen)
+![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black) ![Tests](https://img.shields.io/badge/tests-65_passing-brightgreen)
 
 ![TaskFlow Screenshot](docs/screenshot.png)
 
