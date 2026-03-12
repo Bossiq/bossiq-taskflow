@@ -80,6 +80,20 @@ export default function TaskCard({ task, onEdit, onDelete }) {
         <p className="task-card-desc">{task.description}</p>
       )}
 
+      {task.subtask_total > 0 && (
+        <div className="subtask-progress" aria-label={`${task.subtask_done} of ${task.subtask_total} subtasks done`}>
+          <div className="subtask-progress-track">
+            <div
+              className="subtask-progress-fill"
+              style={{ width: `${Math.round((task.subtask_done / task.subtask_total) * 100)}%` }}
+            />
+          </div>
+          <span className="subtask-progress-text">
+            ☑ {task.subtask_done}/{task.subtask_total}
+          </span>
+        </div>
+      )}
+
       <div className="task-card-footer">
         <div className="task-card-meta">
           {task.label && <span className="label-badge">{task.label}</span>}

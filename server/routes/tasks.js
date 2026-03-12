@@ -107,7 +107,20 @@ router.get('/', (req, res) => {
     query += ' ORDER BY position ASC, created_at DESC';
 
     const tasks = db.prepare(query).all(...params);
-    res.json(tasks);
+
+    // Enrich with subtask counts
+    const enriched = tasks.map(task => {
+      const subtaskStats = db.prepare(
+        'SELECT COUNT(*) as total, SUM(completed) as done FROM subtasks WHERE task_id = ?'
+      ).get(task.id);
+      return {
+        ...task,
+        subtask_total: subtaskStats?.total || 0,
+        subtask_done: subtaskStats?.done || 0
+      };
+    });
+
+    res.json(enriched);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

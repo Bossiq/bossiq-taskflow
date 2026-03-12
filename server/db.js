@@ -41,6 +41,17 @@ db.exec(`
 
   -- Seed a default project if none exist
   INSERT OR IGNORE INTO projects (id, name, color) VALUES (1, 'My Project', '#6366f1');
+
+  -- Subtasks / checklist items
+  CREATE TABLE IF NOT EXISTS subtasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    completed INTEGER DEFAULT 0,
+    position INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+  );
 `);
 
 // Migration: add due_date to existing databases that don't have it

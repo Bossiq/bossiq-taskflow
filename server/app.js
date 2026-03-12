@@ -15,6 +15,7 @@ import compression from 'compression';
 import { randomUUID } from 'crypto';
 import taskRoutes from './routes/tasks.js';
 import projectRoutes from './routes/projects.js';
+import subtaskRoutes from './routes/subtasks.js';
 import { sanitizeBody } from './middleware/sanitize.js';
 
 const app = express();
@@ -70,6 +71,7 @@ app.use((req, res, next) => {
 
 // ── API Routes ──
 app.use('/api/tasks', taskRoutes);
+app.use('/api/tasks/:taskId/subtasks', subtaskRoutes);
 app.use('/api/projects', projectRoutes);
 
 /** @route GET /api/health — Health check endpoint */

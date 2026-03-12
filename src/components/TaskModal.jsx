@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+const API = '/api';
 
 /**
- * TaskModal — Create/edit task form with accessibility features.
+ * TaskModal — Create/edit task form with subtask checklist.
  *
  * A11y: role="dialog", aria-modal, focus trap, Escape to close,
  * focus returns to trigger element on close.
@@ -11,6 +13,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 export default function TaskModal({ task, onSave, onClose }) {
   const defaultForm = { title: '', description: '', priority: 'medium', label: '', due_date: '', status: 'todo' };
   const [form, setForm] = useState(defaultForm);
+  const [subtasks, setSubtasks] = useState([]);
+  const [newSubtask, setNewSubtask] = useState('');
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
 
@@ -24,29 +28,29 @@ export default function TaskModal({ task, onSave, onClose }) {
         due_date: task.due_date || '',
         status: task.status || 'todo'
       });
+      // Fetch subtasks for existing tasks
+      fetch(`${API}/tasks/${task.id}/subtasks`)
+        .then(r => r.json())
+        .then(data => setSubtasks(Array.isArray(data) ? data : []))
+        .catch(() => {});
     } else {
       setForm(defaultForm);
+      setSubtasks([]);
     }
   }, [task]);
 
-  // Focus management: save previous focus, restore on close
+  // Focus management
   useEffect(() => {
     previousFocusRef.current = document.activeElement;
     const firstInput = modalRef.current?.querySelector('input, textarea, select');
     firstInput?.focus();
-    return () => {
-      previousFocusRef.current?.focus();
-    };
+    return () => { previousFocusRef.current?.focus(); };
   }, []);
 
-  // Keyboard: Escape to close + focus trap
+  // Keyboard: Escape + focus trap
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-        return;
-      }
-      // Focus trap: Tab cycles within modal
+      if (e.key === 'Escape') { onClose(); return; }
       if (e.key === 'Tab' && modalRef.current) {
         const focusable = modalRef.current.querySelectorAll(
           'input, textarea, select, button, [tabindex]:not([tabindex="-1"])'
@@ -54,11 +58,9 @@ export default function TaskModal({ task, onSave, onClose }) {
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
         if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
+          e.preventDefault(); last.focus();
         } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
+          e.preventDefault(); first.focus();
         }
       }
     };
@@ -73,6 +75,44 @@ export default function TaskModal({ task, onSave, onClose }) {
   };
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
+
+  // Subtask handlers
+  const addSubtask = async () => {
+    if (!newSubtask.trim() || !task?.id) return;
+    try {
+      const res = await fetch(`${API}/tasks/${task.id}/subtasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newSubtask.trim() })
+      });
+      if (res.ok) {
+        const sub = await res.json();
+        setSubtasks(prev => [...prev, sub]);
+        setNewSubtask('');
+      }
+    } catch { /* ignore */ }
+  };
+
+  const toggleSubtask = async (subtaskId) => {
+    try {
+      const res = await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}/toggle`, { method: 'PATCH' });
+      if (res.ok) {
+        const updated = await res.json();
+        setSubtasks(prev => prev.map(s => s.id === subtaskId ? updated : s));
+      }
+    } catch { /* ignore */ }
+  };
+
+  const deleteSubtask = async (subtaskId) => {
+    try {
+      await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}`, { method: 'DELETE' });
+      setSubtasks(prev => prev.filter(s => s.id !== subtaskId));
+    } catch { /* ignore */ }
+  };
+
+  const handleSubtaskKeyDown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addSubtask(); }
+  };
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -114,6 +154,50 @@ export default function TaskModal({ task, onSave, onClose }) {
             <input id="task-due" type="date" className="form-input" value={form.due_date}
               onChange={set('due_date')} />
           </div>
+
+          {/* Subtask checklist — only for existing tasks */}
+          {task?.id && (
+            <div className="form-group">
+              <label>Subtasks</label>
+              <div className="subtask-list">
+                {subtasks.map(sub => (
+                  <div key={sub.id} className="subtask-item">
+                    <label className="subtask-check">
+                      <input
+                        type="checkbox"
+                        checked={!!sub.completed}
+                        onChange={() => toggleSubtask(sub.id)}
+                      />
+                      <span className={sub.completed ? 'subtask-done' : ''}>{sub.title}</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="btn-icon subtask-delete"
+                      onClick={() => deleteSubtask(sub.id)}
+                      aria-label={`Delete subtask: ${sub.title}`}
+                    >×</button>
+                  </div>
+                ))}
+                <div className="subtask-add">
+                  <input
+                    className="form-input form-input-sm"
+                    placeholder="Add a subtask..."
+                    value={newSubtask}
+                    onChange={(e) => setNewSubtask(e.target.value)}
+                    onKeyDown={handleSubtaskKeyDown}
+                    maxLength={200}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-ghost"
+                    onClick={addSubtask}
+                    disabled={!newSubtask.trim()}
+                  >Add</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={!form.title.trim()}>

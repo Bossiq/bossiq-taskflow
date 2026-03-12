@@ -959,6 +959,81 @@ input[type="date"].form-input {
   gap: 6px;
 }
 
+/* ===== SUBTASK PROGRESS BAR (TaskCard) ===== */
+.subtask-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.subtask-progress-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-color);
+  overflow: hidden;
+}
+.subtask-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: #22c55e;
+  transition: width 0.3s ease;
+}
+.subtask-progress-text {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ===== SUBTASK CHECKLIST (TaskModal) ===== */
+.subtask-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.subtask-item:last-of-type { border-bottom: none; }
+.subtask-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.subtask-check input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.subtask-done {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.subtask-delete {
+  opacity: 0;
+  transition: opacity var(--transition);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.subtask-item:hover .subtask-delete { opacity: 0.7; }
+.subtask-delete:hover { opacity: 1 !important; color: #ef4444; }
+
+.subtask-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.subtask-add .form-input { flex: 1; }
+
 @media (max-width: 768px) {
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 50; transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
