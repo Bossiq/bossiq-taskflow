@@ -1,0 +1,278 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Sidebar from './components/Sidebar.jsx';
+import Board from './components/Board.jsx';
+import Dashboard from './components/Dashboard.jsx';
+import TaskModal from './components/TaskModal.jsx';
+import ConfirmDialog from './components/ConfirmDialog.jsx';
+import Toast from './components/Toast.jsx';
+
+const API = '/api';
+
+/**
+ * App — Main application shell.
+ *
+ * Manages global state, API communication, routing between views,
+ * toast notifications, confirmation dialogs, and keyboard shortcuts.
+ */
+export default function App() {
+  const [view, setView] = useState('board');
+  const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [currentProject, setCurrentProject] = useState(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [modalTask, setModalTask] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(false);
+  const toastIdRef = useRef(0);
+
+  // ── Search debounce (300ms) ──
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // ── Toast management ──
+  const addToast = useCallback((message, type = 'success') => {
+    const id = ++toastIdRef.current;
+    setToasts(prev => [...prev, { id, message, type }]);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // ── Data fetching ──
+  const fetchTasks = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (currentProject) params.set('project_id', currentProject);
+      if (debouncedSearch) params.set('search', debouncedSearch);
+      const res = await fetch(`${API}/tasks?${params}`);
+      if (!res.ok) throw new Error('Failed to fetch tasks');
+      const data = await res.json();
+      if (Array.isArray(data)) setTasks(data);
+      setApiError(false);
+    } catch (err) {
+      console.error('fetchTasks:', err);
+      setApiError(true);
+    }
+  }, [currentProject, debouncedSearch]);
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/projects`);
+      if (!res.ok) throw new Error('Failed to fetch projects');
+      const data = await res.json();
+      if (Array.isArray(data)) setProjects(data);
+      setApiError(false);
+    } catch (err) {
+      console.error('fetchProjects:', err);
+      setApiError(true);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false));
+  }, []);
+
+  // Re-fetch on dependency changes (not initial)
+  useEffect(() => {
+    if (!loading) fetchTasks();
+  }, [fetchTasks]);
+
+  const triggerRefresh = () => {
+    fetchTasks();
+    fetchProjects();
+    setRefreshKey(k => k + 1);
+  };
+
+  // ── Task CRUD ──
+  const handleSaveTask = async (form) => {
+    try {
+      const method = form.id ? 'PUT' : 'POST';
+      const url = form.id ? `${API}/tasks/${form.id}` : `${API}/tasks`;
+      const body = { ...form, project_id: currentProject || 1 };
+      const res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        addToast(data.error || 'Failed to save task', 'error');
+        return;
+      }
+      setShowModal(false);
+      setModalTask(null);
+      triggerRefresh();
+      addToast(form.id ? 'Task updated' : 'Task created');
+    } catch {
+      addToast('Network error — is the server running?', 'error');
+    }
+  };
+
+  const handleDeleteRequest = (task) => {
+    setConfirmDialog({
+      title: 'Delete Task',
+      message: `Are you sure you want to delete "${task.title}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await fetch(`${API}/tasks/${task.id}`, { method: 'DELETE' });
+          triggerRefresh();
+          addToast('Task deleted');
+        } catch {
+          addToast('Failed to delete task', 'error');
+        }
+        setConfirmDialog(null);
+      },
+      onCancel: () => setConfirmDialog(null)
+    });
+  };
+
+  const handleMove = async (id, status) => {
+    try {
+      await fetch(`${API}/tasks/${id}/move`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      triggerRefresh();
+    } catch {
+      addToast('Failed to move task', 'error');
+    }
+  };
+
+  // ── Project creation ──
+  const handleCreateProject = async ({ name, color }) => {
+    try {
+      const res = await fetch(`${API}/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, color })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        addToast(data.error || 'Failed to create project', 'error');
+        return;
+      }
+      const project = await res.json();
+      fetchProjects();
+      setCurrentProject(project.id);
+      addToast(`Project "${name}" created`);
+    } catch {
+      addToast('Network error', 'error');
+    }
+  };
+
+  const openEdit = (task) => { setModalTask(task); setShowModal(true); };
+  const openNew = () => { setModalTask(null); setShowModal(true); };
+
+  // ── Keyboard shortcuts ──
+  useEffect(() => {
+    const handler = (e) => {
+      if (showModal || confirmDialog) return;
+      const tag = document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        openNew();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showModal, confirmDialog]);
+
+  // ── Loading state ──
+  if (loading) {
+    return (
+      <div className="app-loading" role="status" aria-label="Loading application">
+        <div className="loading-spinner" />
+        <p>Loading TaskFlow...</p>
+      </div>
+    );
+  }
+
+  // ── API error state ──
+  if (apiError && tasks.length === 0 && projects.length === 0) {
+    return (
+      <div className="app-loading" role="alert">
+        <span style={{ fontSize: '2rem' }}>⚠️</span>
+        <h2>Cannot reach the server</h2>
+        <p>Make sure the backend is running on port 3001.</p>
+        <button className="btn btn-primary" onClick={() => { setApiError(false); setLoading(true); Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false)); }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const currentProjectObj = projects.find(p => p.id === currentProject);
+  const pageTitle = view === 'dashboard'
+    ? '📊 Dashboard'
+    : currentProject
+      ? (currentProjectObj?.name || 'Tasks')
+      : 'All Tasks';
+
+  return (
+    <div className="app">
+      <Sidebar
+        view={view} setView={setView}
+        projects={projects}
+        currentProject={currentProject}
+        setCurrentProject={setCurrentProject}
+        onCreateProject={handleCreateProject}
+      />
+      <main className="main-content" id="main-content">
+        <div className="top-bar">
+          <h1>{pageTitle}</h1>
+          <div className="search-box">
+            <span aria-hidden="true">🔍</span>
+            <input
+              id="search-input"
+              placeholder="Search tasks..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search tasks"
+            />
+            {search && (
+              <button className="btn-icon" onClick={() => setSearch('')} aria-label="Clear search" style={{ width: 24, height: 24 }}>×</button>
+            )}
+          </div>
+          {view === 'board' && (
+            <button id="new-task-btn" className="btn btn-primary" onClick={openNew}>+ New Task</button>
+          )}
+        </div>
+
+        {view === 'board' ? (
+          <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} />
+        ) : (
+          <Dashboard refreshKey={refreshKey} />
+        )}
+      </main>
+
+      {showModal && (
+        <TaskModal
+          task={modalTask}
+          onSave={handleSaveTask}
+          onClose={() => { setShowModal(false); setModalTask(null); }}
+        />
+      )}
+
+      {confirmDialog && (
+        <ConfirmDialog {...confirmDialog} />
+      )}
+
+      <div className="toast-container" aria-live="polite">
+        {toasts.map(t => (
+          <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
+        ))}
+      </div>
+    </div>
+  );
+}

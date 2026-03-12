@@ -1,0 +1,114 @@
+/**
+ * TaskFlow API — Express server entry point.
+ *
+ * Security features:
+ * - Helmet.js for HTTP security headers (CSP, HSTS, X-Frame-Options, etc.)
+ * - Rate limiting (100 requests per 15 minutes per IP)
+ * - Gzip compression for responses
+ * - XSS sanitization on all request bodies
+ * - Request size limiting (1MB max)
+ * - Graceful shutdown on SIGTERM/SIGINT
+ *
+ * @module server
+ */
+
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
+import { randomUUID } from 'crypto';
+import taskRoutes from './routes/tasks.js';
+import projectRoutes from './routes/projects.js';
+import { sanitizeBody } from './middleware/sanitize.js';
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+// ── Security Headers ──
+app.use(helmet({
+  contentSecurityPolicy: IS_PROD ? undefined : false, // Disable CSP in dev (Vite HMR needs inline scripts)
+  crossOriginEmbedderPolicy: false
+}));
+
+// ── Compression ──
+app.use(compression());
+
+// ── CORS ──
+app.use(cors({
+  origin: IS_PROD ? process.env.ALLOWED_ORIGIN : '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type']
+}));
+
+// ── Body parsing with size limit ──
+app.use(express.json({ limit: '1mb' }));
+
+// ── XSS sanitization ──
+app.use(sanitizeBody);
+
+// ── Rate limiting ──
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: IS_PROD ? 100 : 1000, // Relaxed in dev
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' }
+});
+app.use('/api/', apiLimiter);
+
+// ── Request ID + Logging ──
+app.use((req, res, next) => {
+  req.id = randomUUID().slice(0, 8);
+  res.setHeader('X-Request-Id', req.id);
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const status = res.statusCode;
+    const color = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[32m';
+    console.log(`${color}${req.method}\x1b[0m ${req.originalUrl} → ${status} (${ms}ms) [${req.id}]`);
+  });
+  next();
+});
+
+// ── API Routes ──
+app.use('/api/tasks', taskRoutes);
+app.use('/api/projects', projectRoutes);
+
+/** @route GET /api/health — Health check endpoint */
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
+});
+
+// ── 404 for unknown API routes ──
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: `Not found: ${req.method} ${req.originalUrl}` });
+});
+
+// ── Global error handler ──
+app.use((err, req, res, _next) => {
+  console.error(`\x1b[31m[ERROR]\x1b[0m [${req.id}]`, err.stack || err.message);
+  res.status(err.status || 500).json({
+    error: IS_PROD ? 'Internal server error' : err.message
+  });
+});
+
+// ── Start server ──
+const server = app.listen(PORT, () => {
+  console.log(`\x1b[36m⚡ TaskFlow API running on http://localhost:${PORT}\x1b[0m`);
+  console.log(`   Environment: ${IS_PROD ? 'production' : 'development'}`);
+});
+
+// ── Graceful shutdown ──
+const shutdown = (signal) => {
+  console.log(`\n\x1b[33m${signal} received. Shutting down gracefully...\x1b[0m`);
+  server.close(() => {
+    console.log('\x1b[32mServer closed.\x1b[0m');
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 5000);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
