@@ -193,4 +193,101 @@ describe('API', () => {
       expect(res.status).toBe(404);
     });
   });
+
+  // ── Subtasks ──
+  describe('Subtasks API', () => {
+    let parentTaskId;
+    let subtaskId;
+
+    beforeAll(async () => {
+      const projects = await request(app).get('/api/projects');
+      const projectId = projects.body[0]?.id || 1;
+      const res = await request(app)
+        .post('/api/tasks')
+        .send({ title: 'Parent for subtasks', project_id: projectId });
+      parentTaskId = res.body.id;
+    });
+
+    it('GET returns empty array for task with no subtasks', async () => {
+      const res = await request(app).get(`/api/tasks/${parentTaskId}/subtasks`);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it('POST creates a subtask', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${parentTaskId}/subtasks`)
+        .send({ title: 'Subtask Alpha' });
+      expect(res.status).toBe(201);
+      expect(res.body.title).toBe('Subtask Alpha');
+      expect(res.body.completed).toBe(0);
+      expect(res.body.task_id).toBe(parentTaskId);
+      subtaskId = res.body.id;
+    });
+
+    it('POST creates a second subtask with incremented position', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${parentTaskId}/subtasks`)
+        .send({ title: 'Subtask Beta' });
+      expect(res.status).toBe(201);
+      expect(res.body.position).toBe(1);
+    });
+
+    it('POST rejects empty title', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${parentTaskId}/subtasks`)
+        .send({ title: '' });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('required');
+    });
+
+    it('POST rejects title over 200 chars', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${parentTaskId}/subtasks`)
+        .send({ title: 'x'.repeat(201) });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('200');
+    });
+
+    it('PATCH toggles subtask completion', async () => {
+      const res = await request(app)
+        .patch(`/api/tasks/${parentTaskId}/subtasks/${subtaskId}/toggle`);
+      expect(res.status).toBe(200);
+      expect(res.body.completed).toBe(1);
+
+      // Toggle back
+      const res2 = await request(app)
+        .patch(`/api/tasks/${parentTaskId}/subtasks/${subtaskId}/toggle`);
+      expect(res2.body.completed).toBe(0);
+    });
+
+    it('PUT updates subtask title', async () => {
+      const res = await request(app)
+        .put(`/api/tasks/${parentTaskId}/subtasks/${subtaskId}`)
+        .send({ title: 'Updated Subtask' });
+      expect(res.status).toBe(200);
+      expect(res.body.title).toBe('Updated Subtask');
+    });
+
+    it('DELETE removes a subtask', async () => {
+      const res = await request(app)
+        .delete(`/api/tasks/${parentTaskId}/subtasks/${subtaskId}`);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('PATCH toggle returns 404 for missing subtask', async () => {
+      const res = await request(app)
+        .patch(`/api/tasks/${parentTaskId}/subtasks/999999/toggle`);
+      expect(res.status).toBe(404);
+    });
+
+    it('task list includes subtask counts', async () => {
+      const res = await request(app).get('/api/tasks');
+      const parent = res.body.find(t => t.id === parentTaskId);
+      expect(parent).toBeDefined();
+      expect(parent).toHaveProperty('subtask_total');
+      expect(parent).toHaveProperty('subtask_done');
+    });
+  });
 });
