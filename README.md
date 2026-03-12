@@ -2,7 +2,9 @@
 
 A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, real-time statistics dashboard, and comprehensive security hardening.
 
-![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg)
+🔗 **[Live Demo → bossiq-taskflow.vercel.app](https://bossiq-taskflow.vercel.app)**
+
+![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-18+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black)
 
 ![TaskFlow Screenshot](docs/screenshot.png)
 
