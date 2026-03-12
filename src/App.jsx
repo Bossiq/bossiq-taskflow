@@ -329,12 +329,35 @@ export default function App() {
     return <AuthPage onAuth={handleAuth} />;
   }
 
-  // ── Loading state ──
+  // ── Loading state with cold-start notification ──
+  const [coldStartMsg, setColdStartMsg] = useState(false);
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setColdStartMsg(true), 3000);
+      return () => clearTimeout(timer);
+    }
+    setColdStartMsg(false);
+  }, [loading]);
+
   if (loading) {
     return (
       <div className="app-loading" role="status" aria-label="Loading application">
-        <div className="loading-spinner" />
-        <p>Loading TaskFlow...</p>
+        <div className="skeleton-board">
+          {['To Do', 'In Progress', 'Done'].map(col => (
+            <div key={col} className="skeleton-column">
+              <div className="skeleton-header" />
+              <div className="skeleton-card" />
+              <div className="skeleton-card short" />
+            </div>
+          ))}
+        </div>
+        <p className="loading-text">Loading TaskFlow...</p>
+        {coldStartMsg && (
+          <div className="cold-start-notice">
+            <span>☕</span>
+            <p>The server is waking up — this usually takes 15-30 seconds on the first visit. Hang tight!</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -343,11 +366,13 @@ export default function App() {
   if (apiError && tasks.length === 0 && projects.length === 0) {
     return (
       <div className="app-loading" role="alert">
-        <span style={{ fontSize: '2rem' }}>⚠️</span>
-        <h2>Cannot reach the server</h2>
-        <p>Make sure the backend is running on port 3001.</p>
+        <span style={{ fontSize: '2.5rem' }}>⚡</span>
+        <h2>Waking up the server…</h2>
+        <p style={{ maxWidth: 400, textAlign: 'center', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          Our free-tier backend spins down after inactivity. It usually restarts in 15-30 seconds.
+        </p>
         <button className="btn btn-primary" onClick={() => { setApiError(false); setLoading(true); Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false)); }}>
-          Retry
+          ⟳ Try Again
         </button>
       </div>
     );

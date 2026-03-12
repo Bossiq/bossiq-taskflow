@@ -56,6 +56,9 @@ export default function TaskCard({ task, onEdit, onDelete, batchMode, selected, 
   return (
     <div
       className={`task-card ${overdue ? 'task-card-overdue' : ''} ${selected ? 'task-card-selected' : ''}`}
+      data-priority={task.priority}
+      role="article"
+      aria-label={`Task: ${task.title}`}
       draggable={!batchMode}
       onClick={handleClick}
       onDragStart={(e) => {
