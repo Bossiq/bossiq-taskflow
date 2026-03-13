@@ -11,7 +11,11 @@
  */
 function sanitizeValue(value) {
   if (typeof value === 'string') {
-    return value.replace(/<[^>]*>/g, '').trim();
+    return value
+      .replace(/<[^>]*>/g, '')                          // Strip raw HTML tags
+      .replace(/&lt;[^>]*(?:>|&gt;)/gi, '')             // Strip partially-encoded tags (xss-clean)
+      .replace(/&lt;[^&]*&gt;/gi, '')                   // Strip fully-encoded tags
+      .trim();
   }
   if (Array.isArray(value)) {
     return value.map(sanitizeValue);
