@@ -36,17 +36,17 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
         status: task.status || 'todo'
       });
       // Fetch subtasks for existing tasks
-      fetch(`${API}/tasks/${task.id}/subtasks`, { headers })
+      fetch(`${API}/tasks/${task.id}/subtasks`, { headers, credentials: 'include' })
         .then(r => r.json())
         .then(data => setSubtasks(Array.isArray(data) ? data : []))
         .catch(() => {});
       // Fetch comments
-      fetch(`${API}/tasks/${task.id}/comments`, { headers })
+      fetch(`${API}/tasks/${task.id}/comments`, { headers, credentials: 'include' })
         .then(r => r.json())
         .then(data => setComments(Array.isArray(data) ? data : []))
         .catch(() => {});
       // Fetch activity logs
-      fetch(`${API}/tasks/${task.id}/activity`, { headers })
+      fetch(`${API}/tasks/${task.id}/activity`, { headers, credentials: 'include' })
         .then(r => r.json())
         .then(data => setActivityLogs(Array.isArray(data) ? data : []))
         .catch(() => {});
@@ -102,6 +102,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
       const res = await fetch(`${API}/tasks/${task.id}/subtasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ title: newSubtask.trim() })
       });
       if (res.ok) {
@@ -114,7 +115,10 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
 
   const toggleSubtask = async (subtaskId) => {
     try {
-      const res = await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}/toggle`, { method: 'PATCH' });
+      const res = await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}/toggle`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
       if (res.ok) {
         const updated = await res.json();
         setSubtasks(prev => prev.map(s => s.id === subtaskId ? updated : s));
@@ -124,7 +128,10 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
 
   const deleteSubtask = async (subtaskId) => {
     try {
-      await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}`, { method: 'DELETE' });
+      await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
       setSubtasks(prev => prev.filter(s => s.id !== subtaskId));
     } catch { /* ignore */ }
   };
@@ -307,7 +314,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                         type="button"
                         className="btn-icon comment-delete"
                         onClick={async () => {
-                          await fetch(`${API}/tasks/${task.id}/comments/${c.id}`, { method: 'DELETE', headers });
+                          await fetch(`${API}/tasks/${task.id}/comments/${c.id}`, { method: 'DELETE', headers, credentials: 'include' });
                           setComments(prev => prev.filter(x => x.id !== c.id));
                         }}
                         aria-label="Delete comment"
@@ -328,7 +335,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                       if (e.key === 'Enter' && newComment.trim()) {
                         e.preventDefault();
                         const res = await fetch(`${API}/tasks/${task.id}/comments`, {
-                          method: 'POST', headers,
+                          method: 'POST', headers, credentials: 'include',
                           body: JSON.stringify({ content: newComment.trim() })
                         });
                         if (res.ok) {
@@ -346,7 +353,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                     onClick={async () => {
                       if (!newComment.trim()) return;
                       const res = await fetch(`${API}/tasks/${task.id}/comments`, {
-                        method: 'POST', headers,
+                        method: 'POST', headers, credentials: 'include',
                         body: JSON.stringify({ content: newComment.trim() })
                       });
                       if (res.ok) {

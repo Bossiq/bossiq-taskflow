@@ -56,6 +56,8 @@ html, body, #root {
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* ===== ACCESSIBILITY ===== */
@@ -92,11 +94,11 @@ html, body, #root {
 /* ===== SKELETON LOADING ===== */
 .skeleton-board {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: clamp(12px, 2vw, 20px);
   width: 100%;
-  max-width: 900px;
-  padding: 0 24px;
+  max-width: min(900px, 90vw);
+  padding: 0 clamp(12px, 3vw, 24px);
   margin-bottom: 24px;
 }
 .skeleton-column {
@@ -212,10 +214,10 @@ html, body, #root {
 ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
 /* ===== APP LAYOUT ===== */
-.app { display: flex; height: 100vh; overflow: hidden; }
+.app { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
 
 .sidebar {
-  width: 260px;
+  width: clamp(200px, 20vw, 280px);
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -227,7 +229,7 @@ html, body, #root {
 }
 
 .sidebar.closed {
-  width: 68px;
+  width: clamp(52px, 5vw, 68px);
 }
 
 .sidebar-header {
@@ -368,10 +370,11 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 28px;
+  padding: clamp(10px, 1.5vw, 16px) clamp(12px, 2.5vw, 28px);
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-secondary);
-  gap: 16px;
+  gap: clamp(8px, 1.5vw, 16px);
+  flex-wrap: wrap;
 }
 
 .top-bar h1 {
@@ -389,7 +392,8 @@ html, body, #root {
   border-radius: var(--radius-sm);
   padding: 8px 14px;
   flex: 1;
-  max-width: 360px;
+  max-width: clamp(200px, 35vw, 400px);
+  min-width: 0;
   transition: all var(--transition);
 }
 
@@ -600,15 +604,15 @@ html, body, #root {
 .board-columns {
   flex: 1;
   display: flex;
-  gap: 20px;
+  gap: clamp(12px, 1.5vw, 20px);
   overflow-x: auto;
   overflow-y: hidden;
 }
 
 .column {
   flex: 1;
-  min-width: 280px;
-  max-width: 380px;
+  min-width: min(280px, 85vw);
+  max-width: 450px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -858,13 +862,16 @@ input[type="date"].form-input {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 32px;
-  width: 90%;
-  max-width: 520px;
+  padding: clamp(20px, 3vw, 32px);
+  width: min(92%, 560px);
+  max-height: 90vh;
+  max-height: 90dvh;
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
   animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal::before {
@@ -1711,10 +1718,10 @@ kbd {
 }
 
 .auth-branding-title {
-  font-size: 3.5rem;
+  font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 800;
   line-height: 1.1;
-  margin-bottom: 24px;
+  margin-bottom: clamp(16px, 2vw, 24px);
   letter-spacing: -1px;
 }
 
