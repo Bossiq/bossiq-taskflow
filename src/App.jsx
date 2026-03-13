@@ -38,8 +38,18 @@ export default function App() {
   const [token, setToken] = useState(null);
   const [coldStartMsg, setColdStartMsg] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = () => window.innerWidth <= 768;
+  const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const toastIdRef = useRef(0);
+
+  // Auto-close sidebar when window shrinks below mobile breakpoint
+  useEffect(() => {
+    const handleResize = () => {
+      if (isMobile() && sidebarOpen) setSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sidebarOpen]);
 
   // ── Auth helpers ──
   const getHeaders = useCallback(() => {
@@ -427,10 +437,10 @@ export default function App() {
   return (
     <div className={`app ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <Sidebar
-        view={view} setView={setView}
+        view={view} setView={(v) => { setView(v); if (isMobile()) setSidebarOpen(false); }}
         projects={projects}
         currentProject={currentProject}
-        setCurrentProject={setCurrentProject}
+        setCurrentProject={(p) => { setCurrentProject(p); if (isMobile()) setSidebarOpen(false); }}
         onCreateProject={handleCreateProject}
         onDeleteProject={handleDeleteProject}
         onExportCSV={handleExportCSV}
@@ -439,6 +449,14 @@ export default function App() {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
+      {/* Mobile backdrop overlay */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <main className="main-content" id="main-content">
         <div className="top-bar">
           <button
