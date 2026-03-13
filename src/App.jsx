@@ -64,7 +64,7 @@ export default function App() {
   const handleAuth = (u) => {
     setUser(u);
     setAuthResolved(true);
-    if (!u && !t) {
+    if (!u) {
       // "Continue without account" — remember the choice
       localStorage.setItem('taskflow-skipped', '1');
     } else {
@@ -441,6 +441,13 @@ export default function App() {
       />
       <main className="main-content" id="main-content">
         <div className="top-bar">
+          <button
+            className="btn-icon mobile-menu-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
           <h1>{pageTitle} {view === 'board' && <span className="header-count">{taskCount}</span>}</h1>
           <div className="search-box">
             <span aria-hidden="true" className="search-icon">🔍</span>

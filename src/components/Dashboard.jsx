@@ -41,19 +41,19 @@ export default function Dashboard({ refreshKey, getHeaders }) {
   const headers = getHeaders?.() || {};
 
   useEffect(() => {
-    fetch('/api/tasks/stats/summary', { headers })
+    fetch('/api/tasks/stats/summary', { headers, credentials: 'include' })
       .then(r => r.json())
       .then(setStats)
       .catch(() => {});
-    fetch('/api/activity?limit=15', { headers })
+    fetch('/api/activity?limit=15', { headers, credentials: 'include' })
       .then(r => r.json())
       .then(data => setActivity(Array.isArray(data) ? data : []))
       .catch(() => {});
-    fetch('/api/activity/streak', { headers })
+    fetch('/api/activity/streak', { headers, credentials: 'include' })
       .then(r => r.json())
       .then(data => setStreak(data?.streak || 0))
       .catch(() => {});
-    fetch('/api/tasks', { headers })
+    fetch('/api/tasks', { headers, credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data)) return;

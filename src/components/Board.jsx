@@ -107,6 +107,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
       const res = await fetch('/api/tasks/batch', {
         method: 'PATCH',
         headers: getHeaders?.() || { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ ids: [...selectedIds], action, value })
       });
       if (res.ok) {
@@ -150,6 +151,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
       fetch(`/api/tasks/${taskId}/reorder`, {
         method: 'PATCH',
         headers: getHeaders?.() || { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ position: destination.index })
       }).then(() => onBatchAction?.()).catch(() => {});
     }
@@ -282,6 +284,11 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
                     key={task.id}
                     task={task}
                     index={idx}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    batchMode={batchMode}
+                    selected={selectedIds.has(task.id)}
+                    onToggleSelect={toggleSelect}
                   />
                 ))}
                 {provided.placeholder}
