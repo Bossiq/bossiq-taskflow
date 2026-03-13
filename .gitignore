@@ -26,3 +26,7 @@ Thumbs.db
 *.log
 npm-debug.log*
 .vercel
+
+# Project knowledge (local-only, not for GitHub)
+.project-knowledge.md
+.gemini/
