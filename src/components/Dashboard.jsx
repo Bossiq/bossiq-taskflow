@@ -112,7 +112,7 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
       {/* Welcome Header */}
       <div className="overview-header">
         <div className="overview-greeting">
-          <h2 className="overview-title">{greeting}, {displayName} 👋</h2>
+          <h2 className="overview-title">{greeting}, {displayName}</h2>
           <p className="overview-date">{formatDate()}</p>
         </div>
         <div className="overview-actions">

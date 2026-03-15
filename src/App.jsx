@@ -502,7 +502,7 @@ export default function App() {
           </button>
           <h1>{pageTitle} {view === 'board' && <span className="header-count">{taskCount}</span>}</h1>
           <div className="search-box">
-            <span aria-hidden="true" className="search-icon">🔍</span>
+            <span aria-hidden="true" className="search-icon">⌕</span>
             <input
               id="search-input"
               placeholder="Search tasks..."
