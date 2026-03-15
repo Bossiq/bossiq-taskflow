@@ -35,7 +35,7 @@ export default function ConfirmDialog({ title, message, confirmLabel, cancelLabe
         aria-describedby="confirm-message"
       >
         <div className="confirm-icon" aria-hidden="true">
-          {variant === 'danger' ? '⚠️' : 'ℹ️'}
+          {variant === 'danger' ? '!' : 'i'}
         </div>
         <h2 id="confirm-title">{title || 'Are you sure?'}</h2>
         <p id="confirm-message" className="confirm-message">{message}</p>

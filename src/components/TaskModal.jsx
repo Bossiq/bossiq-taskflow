@@ -218,10 +218,10 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             <label className="section-label">Priority</label>
             <div className="priority-selector">
               {[
-                { val: 'low', icon: '🟢', label: 'Low' },
-                { val: 'medium', icon: '🔵', label: 'Medium' },
-                { val: 'high', icon: '🟡', label: 'High' },
-                { val: 'urgent', icon: '🔴', label: 'Urgent' }
+                { val: 'low', icon: '', label: 'Low' },
+                { val: 'medium', icon: '', label: 'Medium' },
+                { val: 'high', icon: '', label: 'High' },
+                { val: 'urgent', icon: '', label: 'Urgent' }
               ].map(p => (
                 <button
                   key={p.val}
@@ -276,7 +276,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             <>
             <div className="form-divider" />
             <div className="form-group">
-              <label className="section-label">📋 Subtasks</label>
+              <label className="section-label">Subtasks</label>
               <div className="subtask-list">
                 {subtasks.map(sub => (
                   <div key={sub.id} className="subtask-item">

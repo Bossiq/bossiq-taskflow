@@ -240,7 +240,7 @@ export default function App() {
         body: JSON.stringify({ status })
       });
       if (status === 'done') {
-        addToast('🎉 Task completed!');
+        addToast('Task completed!');
         spawnConfetti();
       }
       triggerRefresh();
@@ -424,7 +424,7 @@ export default function App() {
         <p className="loading-text">Loading TaskFlow...</p>
         {coldStartMsg && (
           <div className="cold-start-notice">
-            <span>☕</span>
+            <span>⌛</span>
             <p>The server is waking up — this usually takes 15-30 seconds on the first visit. Hang tight!</p>
           </div>
         )}
@@ -460,7 +460,7 @@ export default function App() {
 
   const currentProjectObj = projects.find(p => p.id === currentProject);
   const pageTitle = view === 'dashboard'
-    ? '📈 Overview'
+    ? 'Overview'
     : currentProject
       ? (currentProjectObj?.name || 'Tasks')
       : 'All Tasks';

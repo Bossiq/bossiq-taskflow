@@ -14,11 +14,11 @@ const PRIORITY_WEIGHT = { urgent: 4, high: 3, medium: 2, low: 1 };
 
 /** Sort options available to the user */
 const SORT_OPTIONS = [
-  { value: 'priority', label: '🔥 Priority' },
-  { value: 'due', label: '📅 Due Date' },
-  { value: 'newest', label: '🕐 Newest' },
-  { value: 'oldest', label: '📆 Oldest' },
-  { value: 'alpha', label: '🔤 A–Z' }
+  { value: 'priority', label: 'Priority' },
+  { value: 'due', label: 'Due Date' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
+  { value: 'alpha', label: 'A–Z' }
 ];
 
 /** Filter chip definitions */
@@ -225,7 +225,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
               onChange={e => setLabelFilter(e.target.value)}
               aria-label="Filter by label"
             >
-              <option value="">🏷️ All Labels</option>
+              <option value="">All Labels</option>
               {allLabels.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           )}
@@ -258,7 +258,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
               if (window.confirm(`Delete ${selectedIds.size} task${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) {
                 handleBatch('delete');
               }
-            }}>🗑 Delete All</button>
+            }}>Delete All</button>
           </div>
           <button className="btn btn-sm btn-ghost" onClick={clearSelection}>Cancel</button>
         </div>

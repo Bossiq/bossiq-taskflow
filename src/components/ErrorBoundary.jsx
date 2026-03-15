@@ -34,7 +34,7 @@ export default class ErrorBoundary extends React.Component {
       return (
         <div className="error-boundary" role="alert">
           <div className="error-boundary-content">
-            <span className="error-boundary-icon">⚠️</span>
+            <span className="error-boundary-icon">!</span>
             <h1>Something went wrong</h1>
             <p>The application encountered an unexpected error. This has been logged for investigation.</p>
             {!this.props.hideDetails && this.state.error && (

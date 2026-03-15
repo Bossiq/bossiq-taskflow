@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
 const ACTION_ICONS = {
-  created: '🟢',
-  updated: '📝',
-  moved: '➡️',
-  completed: '✅',
-  deleted: '🗑️',
-  subtask_added: '➕',
-  subtask_completed: '☑️'
+  created: '●',
+  updated: '✎',
+  moved: '→',
+  completed: '✓',
+  deleted: '×',
+  subtask_added: '+',
+  subtask_completed: '✓'
 };
 
 const ACTION_COLORS = {
@@ -117,20 +117,20 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
         </div>
         <div className="overview-actions">
           <button className="btn btn-primary btn-sm" onClick={onNewTask}>
-            ➕ New Task
+            + New Task
           </button>
           <button className="btn btn-ghost btn-sm" onClick={() => onNavigate?.('calendar')}>
-            📅 Calendar
+            Calendar
           </button>
           <button className="btn btn-ghost btn-sm" onClick={onExportCSV}>
-            📥 Export
+            Export
           </button>
         </div>
       </div>
 
       {overdue.length > 0 && (
         <div className="overdue-banner" role="alert">
-          <span className="overdue-icon">🔥</span>
+          <span className="overdue-icon">⚠</span>
           <div>
             <strong>{overdue.length} overdue task{overdue.length > 1 ? 's' : ''}</strong>
             <div className="overdue-list">
@@ -167,7 +167,7 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
         </div>
         {streak > 0 && (
           <div className="stat-card stat-card-streak">
-            <div className="stat-value">🔥 {streak}</div>
+            <div className="stat-value">{streak}d</div>
             <div className="stat-label">Day Streak</div>
           </div>
         )}
@@ -176,11 +176,11 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
       {/* Empty state */}
       {total === 0 && (
         <div className="overview-empty">
-          <span className="overview-empty-icon">📝</span>
+          <span className="overview-empty-icon">—</span>
           <h3>No tasks yet</h3>
           <p>Create your first task to see stats and analytics here.</p>
           <button className="btn btn-primary" onClick={onNewTask}>
-            ➕ Create First Task
+            + Create First Task
           </button>
         </div>
       )}
@@ -234,11 +234,11 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
       {/* Activity Feed */}
       {activity.length > 0 && (
         <div className="chart-section">
-          <h3>📋 Recent Activity</h3>
+          <h3>Recent Activity</h3>
           <div className="activity-feed">
             {activity.map(item => (
               <div key={item.id} className="activity-item" style={{ '--activity-color': ACTION_COLORS[item.action] || '#666' }}>
-                <span className="activity-icon">{ACTION_ICONS[item.action] || '📌'}</span>
+                <span className="activity-icon">{ACTION_ICONS[item.action] || '●'}</span>
                 <div className="activity-content">
                   <span className="activity-text">{item.details}</span>
                   <span className="activity-time">{timeAgo(item.created_at)}</span>

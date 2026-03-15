@@ -10,12 +10,12 @@ describe('Toast', () => {
 
   it('renders success icon', () => {
     render(<Toast message="Done" type="success" onClose={() => {}} />);
-    expect(screen.getByText('✅')).toBeInTheDocument();
+    expect(screen.getByText('✓')).toBeInTheDocument();
   });
 
   it('renders error icon', () => {
     render(<Toast message="Failed" type="error" onClose={() => {}} />);
-    expect(screen.getByText('❌')).toBeInTheDocument();
+    expect(screen.getByText('!')).toBeInTheDocument();
   });
 
   it('calls onClose after timeout', async () => {

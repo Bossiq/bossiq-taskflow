@@ -102,4 +102,7 @@ catch { db.exec("ALTER TABLE projects ADD COLUMN user_id INTEGER"); }
 try { db.prepare("SELECT user_id FROM activity_log LIMIT 1").get(); }
 catch { db.exec("ALTER TABLE activity_log ADD COLUMN user_id INTEGER"); }
 
+try { db.prepare("SELECT is_guest FROM users LIMIT 1").get(); }
+catch { db.exec("ALTER TABLE users ADD COLUMN is_guest INTEGER DEFAULT 0"); }
+
 export default db;

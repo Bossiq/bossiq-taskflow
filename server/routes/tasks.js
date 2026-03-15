@@ -46,21 +46,25 @@ function validateTaskInput(body, requireTitle = false) {
 // GET task stats — MUST be before /:id to avoid matching "stats" as an id
 router.get('/stats/summary', (req, res) => {
   try {
-    const total = db.prepare('SELECT COUNT(*) as count FROM tasks').get();
+    const userFilter = req.user ? ' WHERE user_id = ?' : '';
+    const userFilterAnd = req.user ? ' AND user_id = ?' : '';
+    const userParams = req.user ? [req.user.id] : [];
+
+    const total = db.prepare(`SELECT COUNT(*) as count FROM tasks${userFilter}`).get(...userParams);
     const byStatus = db.prepare(
-      'SELECT status, COUNT(*) as count FROM tasks GROUP BY status'
-    ).all();
+      `SELECT status, COUNT(*) as count FROM tasks${userFilter} GROUP BY status`
+    ).all(...userParams);
     const byPriority = db.prepare(
-      'SELECT priority, COUNT(*) as count FROM tasks GROUP BY priority'
-    ).all();
+      `SELECT priority, COUNT(*) as count FROM tasks${userFilter} GROUP BY priority`
+    ).all(...userParams);
     const completedToday = db.prepare(`
       SELECT COUNT(*) as count FROM tasks
-      WHERE completed_at >= date('now', 'start of day')
-    `).get();
+      WHERE completed_at >= date('now', 'start of day')${userFilterAnd}
+    `).get(...userParams);
     const completedThisWeek = db.prepare(`
       SELECT COUNT(*) as count FROM tasks
-      WHERE completed_at >= date('now', '-7 days')
-    `).get();
+      WHERE completed_at >= date('now', '-7 days')${userFilterAnd}
+    `).get(...userParams);
 
     res.json({
       total: total.count,

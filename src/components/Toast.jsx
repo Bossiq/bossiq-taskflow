@@ -7,9 +7,9 @@ export default function Toast({ message, type, onClose }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const icons = {
-    success: '✅',
-    error: '❌',
-    info: 'ℹ️'
+    success: '✓',
+    error: '!',
+    info: 'i'
   };
 
   return (

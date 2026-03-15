@@ -58,9 +58,9 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
 
   // Quick action status options (exclude current status)
   const quickActions = [
-    { status: 'todo', label: '📋 To Do' },
-    { status: 'inprogress', label: '🔄 In Progress' },
-    { status: 'done', label: '✅ Done' }
+    { status: 'todo', label: 'To Do' },
+    { status: 'inprogress', label: 'In Progress' },
+    { status: 'done', label: 'Done' }
   ].filter(a => a.status !== task.status);
 
   return (
@@ -107,7 +107,7 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
             />
           </div>
           <span className="subtask-progress-text">
-            ☑ {task.subtask_done}/{task.subtask_total}
+            ☐ {task.subtask_done}/{task.subtask_total}
           </span>
         </div>
       )}
@@ -117,7 +117,7 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
           {task.label && <span className="label-badge">{task.label}</span>}
           {task.due_date && (
             <span className={`due-badge ${overdue ? 'overdue' : ''}`}>
-              📅 {formatDueDate(task.due_date)}
+              {formatDueDate(task.due_date)}
             </span>
           )}
           <span className="task-card-time" title={task.created_at}>
@@ -126,8 +126,8 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
         </div>
         {!batchMode && (
           <div className="task-card-actions">
-            <button className="btn-icon" onClick={() => onEdit?.(task)} title="Edit task" aria-label="Edit task">✏️</button>
-            <button className="btn-icon" onClick={() => onDelete?.(task)} title="Delete task" aria-label="Delete task">🗑️</button>
+            <button className="btn-icon" onClick={() => onEdit?.(task)} title="Edit task" aria-label="Edit task">✎</button>
+            <button className="btn-icon" onClick={() => onDelete?.(task)} title="Delete task" aria-label="Delete task">×</button>
           </div>
         )}
       </div>

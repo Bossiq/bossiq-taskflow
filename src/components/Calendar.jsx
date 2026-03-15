@@ -102,7 +102,7 @@ export default function Calendar({ tasks, onEdit, onNew }) {
 
       {overdueTasks.length > 0 && (
         <div className="calendar-overdue">
-          🔥 {overdueTasks.length} overdue task{overdueTasks.length > 1 ? 's' : ''}
+          {overdueTasks.length} overdue task{overdueTasks.length > 1 ? 's' : ''}
         </div>
       )}
 
@@ -166,7 +166,7 @@ export default function Calendar({ tasks, onEdit, onNew }) {
                   <span className={`badge ${task.priority}`}>{task.priority}</span>
                   <span className="calendar-task-title">{task.title}</span>
                   <span className={`calendar-task-status status-${task.status}`}>
-                    {task.status === 'done' ? '✅' : task.status === 'inprogress' ? '🔄' : '📋'}
+                    {task.status === 'done' ? '✓' : task.status === 'inprogress' ? '○' : '●'}
                   </span>
                 </div>
               ))}
@@ -177,7 +177,7 @@ export default function Calendar({ tasks, onEdit, onNew }) {
 
       {tasksWithoutDue.length > 0 && (
         <div className="calendar-unscheduled">
-          <h4>📌 Unscheduled ({tasksWithoutDue.length})</h4>
+          <h4>Unscheduled ({tasksWithoutDue.length})</h4>
           <div className="calendar-tasks">
             {tasksWithoutDue.slice(0, 5).map(task => (
               <div key={task.id} className="calendar-task" onClick={() => onEdit?.(task)}>

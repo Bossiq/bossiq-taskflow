@@ -27,23 +27,23 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
   return (
     <div className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
       <div className="sidebar-header">
-        {isOpen && <div className="sidebar-logo">⚡ TaskFlow</div>}
-        {!isOpen && <div className="sidebar-logo-icon">⚡</div>}
+        {isOpen && <div className="sidebar-logo">TaskFlow</div>}
+        {!isOpen && <div className="sidebar-logo-icon">T</div>}
         <button className="btn-icon sidebar-toggle" onClick={onToggle} aria-label="Toggle Sidebar" title="Toggle Sidebar (Cmd+\)">
           {isOpen ? '◧' : '◨'}
         </button>
       </div>
       <nav className="sidebar-nav">
         <button className={`nav-item ${view === 'board' ? 'active' : ''}`} onClick={() => { setCurrentProject(null); setView('board'); }} title="All Tasks">
-          <span className="nav-icon">📋</span>
+          <span className="nav-icon">☰</span>
           {isOpen && <span className="nav-text">All Tasks</span>}
         </button>
         <button className={`nav-item ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Overview">
-          <span className="nav-icon">📈</span>
+          <span className="nav-icon">◎</span>
           {isOpen && <span className="nav-text">Overview</span>}
         </button>
         <button className={`nav-item ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')} title="Calendar">
-          <span className="nav-icon">📅</span>
+          <span className="nav-icon">▦</span>
           {isOpen && <span className="nav-text">Calendar</span>}
         </button>
 
@@ -106,7 +106,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
                 title={`Delete ${p.name}`}
                 aria-label={`Delete project ${p.name}`}
               >
-                🗑
+                ×
               </button>
             )}
           </div>
@@ -118,17 +118,17 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
           <div className="user-info">
             <div className="user-avatar">{user.username?.[0]?.toUpperCase() || '?'}</div>
             {isOpen && <span className="user-name">{user.username}</span>}
-            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign out" aria-label="Sign out">↪</button>}
+            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign out" aria-label="Sign out">→</button>}
           </div>
         ) : (
           <div className="user-info guest">
-            <div className="user-avatar guest" title="Sign in">✨</div>
+            <div className="user-avatar guest" title="Sign in">G</div>
             {isOpen && <span className="user-name">Guest</span>}
-            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign in" aria-label="Sign in to save your data">🔑</button>}
+            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign in" aria-label="Sign in to save your data">→</button>}
           </div>
         )}
         <button className="theme-toggle" onClick={onExportCSV} aria-label="Export tasks to CSV" title="Export CSV">
-          <span className="nav-icon">📥</span>
+          <span className="nav-icon">↓</span>
           {isOpen && <span className="nav-text">Export CSV</span>}
         </button>
         <button
@@ -142,7 +142,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           title={`Switch mode`}
         >
-          <span className="nav-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span className="nav-icon">{theme === 'dark' ? '○' : '●'}</span>
           {isOpen && <span className="nav-text">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
         {isOpen && (

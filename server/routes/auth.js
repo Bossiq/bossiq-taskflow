@@ -5,6 +5,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import db from '../db.js';
 import { requireAuth, JWT_SECRET } from '../middleware/auth.js';
 
@@ -14,6 +15,41 @@ const USERNAME_MIN = 3;
 const USERNAME_MAX = 30;
 const PASSWORD_MIN = 6;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * POST /api/auth/guest — Create anonymous guest session
+ */
+router.post('/guest', (req, res) => {
+  try {
+    const guestId = crypto.randomBytes(4).toString('hex');
+    const username = `guest_${guestId}`;
+    const email = `${username}@guest.local`;
+    const password_hash = 'guest-no-password';
+
+    const result = db.prepare(
+      'INSERT INTO users (username, email, password_hash, is_guest) VALUES (?, ?, ?, 1)'
+    ).run(username, email, password_hash);
+
+    const user = db.prepare('SELECT id, username, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+
+    // Create default project for guest
+    db.prepare('INSERT INTO projects (name, color, user_id) VALUES (?, ?, ?)').run('My Project', '#6366f1', user.id);
+
+    // Generate JWT — same as regular login
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.cookie('taskflow_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.status(201).json({ user: { id: user.id, username: user.username, is_guest: true } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * POST /api/auth/register — Create a new account

@@ -88,8 +88,18 @@ export default function AuthPage({ onAuth }) {
     }
   };
 
-  const handleSkip = () => {
-    onAuth(null, null);
+  const handleSkip = async () => {
+    try {
+      const res = await fetch('/api/auth/guest', { method: 'POST', credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        onAuth(data.user);
+      } else {
+        onAuth(null, null); // fallback to old behavior
+      }
+    } catch {
+      onAuth(null, null); // fallback if server unreachable
+    }
   };
 
   const handleTabSwitch = (newMode) => {
@@ -105,7 +115,7 @@ export default function AuthPage({ onAuth }) {
       <div className="auth-branding">
         <div className="auth-branding-content">
           <div className="auth-branding-logo">
-            <span className="auth-logo-icon">⚡</span>
+            <span className="auth-logo-icon">T</span>
             <span>TaskFlow</span>
           </div>
           <h2 className="auth-branding-title">Manage your work.<br/>Master your time.</h2>
@@ -125,7 +135,7 @@ export default function AuthPage({ onAuth }) {
       <div className="auth-form-container">
         <div className="auth-form-wrapper">
           <div className="auth-header-mobile">
-            <span className="auth-logo-icon">⚡</span> TaskFlow
+            <span className="auth-logo-icon">T</span> TaskFlow
           </div>
           
           <h1 className="auth-form-title">
@@ -200,14 +210,14 @@ export default function AuthPage({ onAuth }) {
                 />
                 <label htmlFor="auth-password">Password</label>
                 <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
-                  {showPw ? '🙈' : '👁️'}
+                  {showPw ? '○' : '●'}
                 </button>
               </div>
             </div>
 
             {error && (
               <div className="auth-error" role="alert">
-                ⚠️ {error}
+                {error}
                 {rateLimitSeconds > 0 && (
                   <div className="auth-rate-limit-timer">
                     Try again in {rateLimitSeconds}s
@@ -218,7 +228,7 @@ export default function AuthPage({ onAuth }) {
 
             <button type="submit" className="btn btn-primary auth-submit" disabled={loading || rateLimitSeconds > 0}>
               {loading ? (
-                <span className="auth-spinner">⏳ Signing in...</span>
+                <span className="auth-spinner">Signing in...</span>
               ) : rateLimitSeconds > 0 ? (
                 `Wait ${rateLimitSeconds}s`
               ) : mode === 'login' ? 'Sign In' : 'Create Account'}
