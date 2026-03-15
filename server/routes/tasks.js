@@ -311,6 +311,7 @@ router.post('/process-recurring', (req, res) => {
           task.recurrence_rule,
           task.id
         );
+        logActivity(null, 'recurring_created', `Recurring ${task.recurrence_rule}: "${task.title}" auto-created (next due: ${nextDue || 'no date'})`, task.user_id);
         created++;
       }
     });

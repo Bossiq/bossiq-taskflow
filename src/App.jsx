@@ -4,6 +4,7 @@ import TaskModal from './components/TaskModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
 import Toast from './components/Toast.jsx';
 import AuthPage from './components/AuthPage.jsx';
+import NotificationBell from './components/NotificationBell.jsx';
 
 // Lazy loaded heavy components for code splitting
 const Board = lazy(() => import('./components/Board.jsx'));
@@ -553,6 +554,7 @@ export default function App() {
               <kbd className="search-shortcut">⌘K</kbd>
             )}
           </div>
+          <NotificationBell tasks={tasks} getHeaders={getHeaders} />
           {view === 'board' && (
             <button id="new-task-btn" className="btn btn-primary" onClick={openNew}>+ New Task</button>
           )}
