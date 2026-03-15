@@ -858,6 +858,11 @@ input[type="date"].form-input {
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
 }
+.label-badge.recurrence {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
 
 /* ===== MODAL & FLOATING LABELS ===== */
 .modal-overlay {

@@ -57,7 +57,7 @@ export default function App() {
 
   // Scroll lock when modal or dialog is open
   useEffect(() => {
-    if (showModal || confirmDialog || showShortcuts) {
+    if (showModal || confirmDialog || showShortcuts || showSettings) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
@@ -208,6 +208,14 @@ export default function App() {
     setRefreshKey(k => k + 1);
   };
 
+  // ── Process recurring tasks helper ──
+  const processRecurring = async () => {
+    try {
+      await fetch(`${API}/tasks/process-recurring`, { method: 'POST', headers: getHeaders(), credentials: 'include' });
+      triggerRefresh();
+    } catch { /* silent — best effort */ }
+  };
+
   // ── Task CRUD ──
   const handleSaveTask = async (form) => {
     try {
@@ -226,6 +234,8 @@ export default function App() {
       setModalTask(null);
       triggerRefresh();
       addToast(form.id ? 'Task updated' : 'Task created');
+      // Auto-create next recurring instance if task marked done
+      if (form.status === 'done' && form.recurrence_rule) processRecurring();
     } catch {
       addToast('Network error — is the server running?', 'error');
     }
@@ -262,6 +272,8 @@ export default function App() {
       if (status === 'done') {
         addToast('Task completed!');
         spawnConfetti();
+        // Auto-create next recurring instance
+        processRecurring();
       }
       triggerRefresh();
     } catch {
@@ -271,7 +283,7 @@ export default function App() {
 
   /** Spawn confetti particles on task completion */
   const spawnConfetti = () => {
-    const colors = ['#6366f1', '#22c55e', '#fbbf24', '#fb7185', '#a5b4fc', '#f472b6'];
+    const colors = ['#0ea5e9', '#22c55e', '#fbbf24', '#fb7185', '#7dd3fc', '#f472b6'];
     const container = document.createElement('div');
     container.className = 'confetti-container';
     document.body.appendChild(container);

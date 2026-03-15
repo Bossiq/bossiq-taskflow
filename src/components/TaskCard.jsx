@@ -115,6 +115,9 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
       <div className="task-card-footer">
         <div className="task-card-meta">
           {task.label && <span className="label-badge">{task.label}</span>}
+          {task.recurrence_rule && (
+            <span className="label-badge recurrence" title={`Repeats ${task.recurrence_rule}`}>↻ {task.recurrence_rule}</span>
+          )}
           {task.due_date && (
             <span className={`due-badge ${overdue ? 'overdue' : ''}`}>
               {formatDueDate(task.due_date)}
