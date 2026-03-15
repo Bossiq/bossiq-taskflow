@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Circle, Pencil, ArrowRight, Check, Trash2, Plus, ChevronRight
+  Circle, Pencil, ArrowRight, Check, Trash2, Plus, ChevronRight, AlertTriangle
 } from 'lucide-react';
 
 const ACTION_ICONS = {
@@ -133,7 +133,7 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
 
       {overdue.length > 0 && (
         <div className="overdue-banner" role="alert">
-          <span className="overdue-icon">⚠</span>
+          <span className="overdue-icon"><AlertTriangle size={16} /></span>
           <div>
             <strong>{overdue.length} overdue task{overdue.length > 1 ? 's' : ''}</strong>
             <div className="overdue-list">

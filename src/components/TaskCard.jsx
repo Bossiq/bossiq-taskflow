@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pencil, Trash2, RotateCw } from 'lucide-react';
+import { Pencil, Trash2, RotateCw, ListTodo } from 'lucide-react';
 import { Draggable } from '@hello-pangea/dnd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -108,7 +108,7 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
             />
           </div>
           <span className="subtask-progress-text">
-            ☐ {task.subtask_done}/{task.subtask_total}
+            <ListTodo size={12} style={{display:'inline',verticalAlign:'middle',marginRight:3}} /> {task.subtask_done}/{task.subtask_total}
           </span>
         </div>
       )}

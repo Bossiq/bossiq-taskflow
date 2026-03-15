@@ -6,7 +6,7 @@ import Toast from './components/Toast.jsx';
 import AuthPage from './components/AuthPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import useSocket from './hooks/useSocket.js';
-import { Menu, Search, X, Plus } from 'lucide-react';
+import { Menu, Search, X, Plus, Loader2 } from 'lucide-react';
 
 // Lazy loaded heavy components for code splitting
 const Board = lazy(() => import('./components/Board.jsx'));
@@ -566,19 +566,19 @@ export default function App() {
         </div>
 
         {view === 'board' ? (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Board...</p></div>}>
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Board...</p></div>}>
             <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} />
           </Suspense>
         ) : view === 'calendar' ? (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Calendar...</p></div>}>
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Calendar...</p></div>}>
             <Calendar tasks={tasks} onEdit={openEdit} onNew={openNew} />
           </Suspense>
         ) : view === 'gantt' ? (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Timeline...</p></div>}>
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Timeline...</p></div>}>
             <Gantt tasks={tasks} onEdit={openEdit} />
           </Suspense>
         ) : (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Overview...</p></div>}>
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Overview...</p></div>}>
             <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} overdueTasks={overdueTasks} onNavigate={(v) => setView(v)} onNewTask={openNew} onExportCSV={handleExportCSV} user={user} />
           </Suspense>
         )}
