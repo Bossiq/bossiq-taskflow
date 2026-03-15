@@ -111,4 +111,6 @@ catch { db.exec("ALTER TABLE tasks ADD COLUMN recurrence_rule TEXT DEFAULT NULL"
 try { db.prepare("SELECT recurrence_parent_id FROM tasks LIMIT 1").get(); }
 catch { db.exec("ALTER TABLE tasks ADD COLUMN recurrence_parent_id INTEGER DEFAULT NULL"); }
 
+console.log('DB migrations applied — schema version 2 (recurrence columns)');
+
 export default db;
