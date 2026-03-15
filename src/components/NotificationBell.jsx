@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  AlertTriangle, Clock, CalendarClock,
+  Pencil, Plus, Check, ArrowRight, RotateCw, Trash2,
+  BellOff, Circle
+} from 'lucide-react';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -14,10 +19,14 @@ function timeAgo(dateStr) {
 }
 
 const ACTION_ICONS = {
-  created: '●', updated: '✎', moved: '→',
-  completed: '✓', deleted: '×',
-  subtask_added: '+', subtask_completed: '✓',
-  recurring_created: '↻'
+  created: <Circle size={12} fill="currentColor" />,
+  updated: <Pencil size={12} />,
+  moved: <ArrowRight size={12} />,
+  completed: <Check size={12} />,
+  deleted: <Trash2 size={12} />,
+  subtask_added: <Plus size={12} />,
+  subtask_completed: <Check size={12} />,
+  recurring_created: <RotateCw size={12} />
 };
 
 /**
@@ -137,7 +146,7 @@ export default function NotificationBell({ tasks, getHeaders }) {
                 <div className="notif-section-title notif-danger">Overdue</div>
                 {overdue.slice(0, 3).map(t => (
                   <div key={t.id} className="notif-item notif-item-danger">
-                    <span className="notif-item-icon">!</span>
+                    <span className="notif-item-icon"><AlertTriangle size={14} /></span>
                     <div className="notif-item-content">
                       <span className="notif-item-text">{t.title}</span>
                       <span className="notif-item-meta">
@@ -158,7 +167,7 @@ export default function NotificationBell({ tasks, getHeaders }) {
                 <div className="notif-section-title notif-warning">Due Today</div>
                 {dueToday.map(t => (
                   <div key={t.id} className="notif-item notif-item-warning">
-                    <span className="notif-item-icon">●</span>
+                    <span className="notif-item-icon"><Clock size={14} /></span>
                     <div className="notif-item-content">
                       <span className="notif-item-text">{t.title}</span>
                       <span className="notif-item-meta">{t.priority} priority</span>
@@ -174,7 +183,7 @@ export default function NotificationBell({ tasks, getHeaders }) {
                 <div className="notif-section-title">Due Tomorrow</div>
                 {dueTomorrow.map(t => (
                   <div key={t.id} className="notif-item">
-                    <span className="notif-item-icon">○</span>
+                    <span className="notif-item-icon"><CalendarClock size={14} /></span>
                     <div className="notif-item-content">
                       <span className="notif-item-text">{t.title}</span>
                       <span className="notif-item-meta">{t.priority} priority</span>
@@ -190,7 +199,7 @@ export default function NotificationBell({ tasks, getHeaders }) {
                 <div className="notif-section-title">Recent Activity</div>
                 {activity.slice(0, 5).map(a => (
                   <div key={a.id} className={`notif-item ${a.created_at > lastSeen ? 'notif-item-unread' : ''}`}>
-                    <span className="notif-item-icon">{ACTION_ICONS[a.action] || '●'}</span>
+                    <span className="notif-item-icon">{ACTION_ICONS[a.action] || <Circle size={12} fill="currentColor" />}</span>
                     <div className="notif-item-content">
                       <span className="notif-item-text">{a.details}</span>
                       <span className="notif-item-meta">{timeAgo(a.created_at)}</span>
@@ -203,7 +212,7 @@ export default function NotificationBell({ tasks, getHeaders }) {
             {/* Empty state */}
             {overdue.length === 0 && dueToday.length === 0 && dueTomorrow.length === 0 && activity.length === 0 && (
               <div className="notif-empty">
-                <span className="notif-empty-icon">—</span>
+                <span className="notif-empty-icon"><BellOff size={32} /></span>
                 <p>No notifications</p>
               </div>
             )}

@@ -6,6 +6,7 @@ import Toast from './components/Toast.jsx';
 import AuthPage from './components/AuthPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import useSocket from './hooks/useSocket.js';
+import { Menu, Search, X, Plus } from 'lucide-react';
 
 // Lazy loaded heavy components for code splitting
 const Board = lazy(() => import('./components/Board.jsx'));
@@ -540,11 +541,11 @@ export default function App() {
             onClick={() => setSidebarOpen(!sidebarOpen)}
             aria-label="Toggle menu"
           >
-            ☰
+            <Menu size={20} />
           </button>
           <h1>{pageTitle} {view === 'board' && <span className="header-count">{taskCount}</span>}</h1>
           <div className="search-box">
-            <span aria-hidden="true" className="search-icon">⌕</span>
+            <span aria-hidden="true" className="search-icon"><Search size={16} /></span>
             <input
               id="search-input"
               placeholder="Search tasks..."
@@ -553,13 +554,13 @@ export default function App() {
               aria-label="Search tasks"
             />
             {search ? (
-              <button className="btn-icon" onClick={() => setSearch('')} aria-label="Clear search" style={{ width: 24, height: 24 }}>×</button>
+              <button className="btn-icon" onClick={() => setSearch('')} aria-label="Clear search" style={{ width: 24, height: 24 }}><X size={14} /></button>
             ) : (
               <kbd className="search-shortcut">⌘K</kbd>
             )}
           </div>
           <NotificationBell tasks={tasks} getHeaders={getHeaders} />
-          <button id="new-task-btn" className="btn btn-primary" onClick={openNew}>+ New Task</button>
+          <button id="new-task-btn" className="btn btn-primary" onClick={openNew}><Plus size={16} style={{display:'inline',verticalAlign:'middle',marginRight:4}} />New Task</button>
         </div>
 
         {view === 'board' ? (

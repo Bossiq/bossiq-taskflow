@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Check, Circle } from 'lucide-react';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -93,9 +94,9 @@ export default function Calendar({ tasks, onEdit, onNew }) {
     <div className="calendar-view">
       <div className="calendar-header">
         <div className="calendar-nav">
-          <button className="btn btn-sm btn-ghost" onClick={() => navigate(-1)}>◀</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => navigate(-1)}><ChevronLeft size={16} /></button>
           <h2 className="calendar-title">{MONTHS[month]} {year}</h2>
-          <button className="btn btn-sm btn-ghost" onClick={() => navigate(1)}>▶</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => navigate(1)}><ChevronRight size={16} /></button>
         </div>
         <button className="btn btn-sm btn-primary" onClick={goToday}>Today</button>
       </div>
@@ -166,7 +167,7 @@ export default function Calendar({ tasks, onEdit, onNew }) {
                   <span className={`badge ${task.priority}`}>{task.priority}</span>
                   <span className="calendar-task-title">{task.title}</span>
                   <span className={`calendar-task-status status-${task.status}`}>
-                    {task.status === 'done' ? '✓' : task.status === 'inprogress' ? '○' : '●'}
+                    {task.status === 'done' ? <Check size={10} /> : task.status === 'inprogress' ? <Circle size={8} /> : <Circle size={8} fill="currentColor" />}
                   </span>
                 </div>
               ))}

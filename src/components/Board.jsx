@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { X, ListChecks, Check, ArrowRight } from 'lucide-react';
 import TaskCard from './TaskCard.jsx';
 
 /** @constant COLUMNS — Kanban column definitions */
@@ -231,7 +232,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
           )}
           {activeFilterCount > 0 && (
             <button className="filter-clear" onClick={clearFilters}>
-              ✕ {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}
+              <X size={14} style={{display:'inline',verticalAlign:'middle',marginRight:4}} />{activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}
             </button>
           )}
         </div>
@@ -242,7 +243,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
           onClick={() => { setBatchMode(!batchMode); if (batchMode) clearSelection(); }}
           aria-pressed={batchMode}
         >
-          {batchMode ? `✓ ${selectedIds.size} selected` : '☑ Select'}
+          {batchMode ? <><Check size={14} style={{display:'inline',verticalAlign:'middle',marginRight:4}} />{selectedIds.size} selected</> : <><ListChecks size={14} style={{display:'inline',verticalAlign:'middle',marginRight:4}} />Select</>}
         </button>
       </div>
 
@@ -251,9 +252,9 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
         <div className="batch-bar">
           <span className="batch-label">{selectedIds.size} task{selectedIds.size > 1 ? 's' : ''} selected</span>
           <div className="batch-actions">
-            <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'todo')}>→ To Do</button>
-            <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'inprogress')}>→ In Progress</button>
-            <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'done')}>→ Done</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'todo')}><ArrowRight size={12} style={{display:'inline',verticalAlign:'middle',marginRight:2}} />To Do</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'inprogress')}><ArrowRight size={12} style={{display:'inline',verticalAlign:'middle',marginRight:2}} />In Progress</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'done')}><ArrowRight size={12} style={{display:'inline',verticalAlign:'middle',marginRight:2}} />Done</button>
             <button className="btn btn-sm" style={{ color: '#fb7185' }} onClick={() => {
               if (window.confirm(`Delete ${selectedIds.size} task${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) {
                 handleBatch('delete');

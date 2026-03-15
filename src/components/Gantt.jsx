@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { GanttChart as GanttIcon, Minus, Plus, RotateCw } from 'lucide-react';
 
 const PRIORITY_COLORS = {
   urgent: '#ef4444',
@@ -119,7 +120,7 @@ export default function Gantt({ tasks, onEdit }) {
   if (tasks.length === 0) {
     return (
       <div className="gantt-empty">
-        <div className="gantt-empty-icon">▬</div>
+        <div className="gantt-empty-icon"><GanttIcon size={40} /></div>
         <h3>No tasks to display</h3>
         <p>Create tasks with due dates to see them on the timeline.</p>
       </div>
@@ -136,7 +137,7 @@ export default function Gantt({ tasks, onEdit }) {
           onClick={() => setZoom(z => Math.max(20, z - 10))}
           disabled={zoom <= 20}
         >
-          −
+          <Minus size={16} />
         </button>
         <span className="gantt-zoom-value">{zoom}px/day</span>
         <button
@@ -144,7 +145,7 @@ export default function Gantt({ tasks, onEdit }) {
           onClick={() => setZoom(z => Math.min(80, z + 10))}
           disabled={zoom >= 80}
         >
-          +
+          <Plus size={16} />
         </button>
       </div>
 
@@ -169,7 +170,7 @@ export default function Gantt({ tasks, onEdit }) {
                     />
                     <span className="gantt-label-text">{task.title}</span>
                     {task.recurrence_rule && (
-                      <span className="gantt-recurrence-badge" title={`Repeats ${task.recurrence_rule}`}>↻</span>
+                      <span className="gantt-recurrence-badge" title={`Repeats ${task.recurrence_rule}`}><RotateCw size={12} /></span>
                     )}
                   </div>
                 ))}

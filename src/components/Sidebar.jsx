@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import {
+  PanelLeftClose, PanelLeftOpen,
+  LayoutList, LayoutDashboard, CalendarDays, GanttChart,
+  Plus, X, LogOut, LogIn,
+  Download, Settings, Sun, Moon,
+  Trash2
+} from 'lucide-react';
 
 const PROJECT_COLORS = ['#0ea5e9', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#f97316', '#8b5cf6'];
 
@@ -30,24 +37,24 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
         {isOpen && <div className="sidebar-logo">TaskFlow</div>}
         {!isOpen && <div className="sidebar-logo-icon">T</div>}
         <button className="btn-icon sidebar-toggle" onClick={onToggle} aria-label="Toggle Sidebar" title="Toggle Sidebar (Cmd+\)">
-          {isOpen ? '◧' : '◨'}
+          {isOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
         </button>
       </div>
       <nav className="sidebar-nav">
         <button className={`nav-item ${view === 'board' ? 'active' : ''}`} onClick={() => { setCurrentProject(null); setView('board'); }} title="All Tasks">
-          <span className="nav-icon">☰</span>
+          <span className="nav-icon"><LayoutList size={18} /></span>
           {isOpen && <span className="nav-text">All Tasks</span>}
         </button>
         <button className={`nav-item ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Overview">
-          <span className="nav-icon">◎</span>
+          <span className="nav-icon"><LayoutDashboard size={18} /></span>
           {isOpen && <span className="nav-text">Overview</span>}
         </button>
         <button className={`nav-item ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')} title="Calendar">
-          <span className="nav-icon">▦</span>
+          <span className="nav-icon"><CalendarDays size={18} /></span>
           {isOpen && <span className="nav-text">Calendar</span>}
         </button>
         <button className={`nav-item ${view === 'gantt' ? 'active' : ''}`} onClick={() => setView('gantt')} title="Timeline">
-          <span className="nav-icon">▬</span>
+          <span className="nav-icon"><GanttChart size={18} /></span>
           {isOpen && <span className="nav-text">Timeline</span>}
         </button>
 
@@ -59,7 +66,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
               onClick={() => setShowNewProject(!showNewProject)}
               title="New project"
             >
-              {showNewProject ? '×' : '+'}
+              {showNewProject ? <X size={14} /> : <Plus size={14} />}
             </button>
           )}
         </div>
@@ -110,7 +117,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
                 title={`Delete ${p.name}`}
                 aria-label={`Delete project ${p.name}`}
               >
-                ×
+                <Trash2 size={14} />
               </button>
             )}
           </div>
@@ -122,21 +129,21 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
           <div className="user-info">
             <div className="user-avatar">{user.username?.[0]?.toUpperCase() || '?'}</div>
             {isOpen && <span className="user-name">{user.username}</span>}
-            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign out" aria-label="Sign out">→</button>}
+            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign out" aria-label="Sign out"><LogOut size={16} /></button>}
           </div>
         ) : (
           <div className="user-info guest">
             <div className="user-avatar guest" title="Sign in">G</div>
             {isOpen && <span className="user-name">Guest</span>}
-            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign in" aria-label="Sign in to save your data">→</button>}
+            {isOpen && <button className="btn-icon" onClick={onLogout} title="Sign in" aria-label="Sign in to save your data"><LogIn size={16} /></button>}
           </div>
         )}
         <button className="theme-toggle" onClick={onExportCSV} aria-label="Export tasks to CSV" title="Export CSV">
-          <span className="nav-icon">↓</span>
+          <span className="nav-icon"><Download size={18} /></span>
           {isOpen && <span className="nav-text">Export CSV</span>}
         </button>
         <button className="theme-toggle" onClick={onOpenSettings} aria-label="Settings" title="Settings">
-          <span className="nav-icon">⚙</span>
+          <span className="nav-icon"><Settings size={18} /></span>
           {isOpen && <span className="nav-text">Settings</span>}
         </button>
         <button
@@ -150,7 +157,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           title={`Switch mode`}
         >
-          <span className="nav-icon">{theme === 'dark' ? '○' : '●'}</span>
+          <span className="nav-icon">{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>
           {isOpen && <span className="nav-text">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
         {isOpen && (

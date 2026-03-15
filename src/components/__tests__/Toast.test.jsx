@@ -9,13 +9,13 @@ describe('Toast', () => {
   });
 
   it('renders success icon', () => {
-    render(<Toast message="Done" type="success" onClose={() => {}} />);
-    expect(screen.getByText('✓')).toBeInTheDocument();
+    const { container } = render(<Toast message="Done" type="success" onClose={() => {}} />);
+    expect(container.querySelector('.toast-icon svg')).toBeInTheDocument();
   });
 
   it('renders error icon', () => {
-    render(<Toast message="Failed" type="error" onClose={() => {}} />);
-    expect(screen.getByText('!')).toBeInTheDocument();
+    const { container } = render(<Toast message="Failed" type="error" onClose={() => {}} />);
+    expect(container.querySelector('.toast-icon svg')).toBeInTheDocument();
   });
 
   it('calls onClose after timeout', async () => {

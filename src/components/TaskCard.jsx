@@ -1,4 +1,5 @@
 import React from 'react';
+import { Pencil, Trash2, RotateCw } from 'lucide-react';
 import { Draggable } from '@hello-pangea/dnd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -116,7 +117,7 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
         <div className="task-card-meta">
           {task.label && <span className="label-badge">{task.label}</span>}
           {task.recurrence_rule && (
-            <span className="label-badge recurrence" title={`Repeats ${task.recurrence_rule}`}>↻ {task.recurrence_rule}</span>
+            <span className="label-badge recurrence" title={`Repeats ${task.recurrence_rule}`}><RotateCw size={12} style={{display:'inline',verticalAlign:'middle',marginRight:3}} />{task.recurrence_rule}</span>
           )}
           {task.due_date && (
             <span className={`due-badge ${overdue ? 'overdue' : ''}`}>
@@ -129,8 +130,8 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
         </div>
         {!batchMode && (
           <div className="task-card-actions">
-            <button className="btn-icon" onClick={() => onEdit?.(task)} title="Edit task" aria-label="Edit task">✎</button>
-            <button className="btn-icon" onClick={() => onDelete?.(task)} title="Delete task" aria-label="Delete task">×</button>
+            <button className="btn-icon" onClick={() => onEdit?.(task)} title="Edit task" aria-label="Edit task"><Pencil size={14} /></button>
+            <button className="btn-icon" onClick={() => onDelete?.(task)} title="Delete task" aria-label="Delete task"><Trash2 size={14} /></button>
           </div>
         )}
       </div>

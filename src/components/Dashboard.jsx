@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Circle, Pencil, ArrowRight, Check, Trash2, Plus, ChevronRight
+} from 'lucide-react';
 
 const ACTION_ICONS = {
-  created: '●',
-  updated: '✎',
-  moved: '→',
-  completed: '✓',
-  deleted: '×',
-  subtask_added: '+',
-  subtask_completed: '✓'
+  created: <Circle size={12} fill="currentColor" />,
+  updated: <Pencil size={12} />,
+  moved: <ArrowRight size={12} />,
+  completed: <Check size={12} />,
+  deleted: <Trash2 size={12} />,
+  subtask_added: <Plus size={12} />,
+  subtask_completed: <Check size={12} />
 };
 
 const ACTION_COLORS = {
@@ -149,17 +152,17 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
         <button className="stat-card stat-card-interactive" onClick={() => onNavigate?.('board')} title="View all tasks">
           <div className="stat-value">{total}</div>
           <div className="stat-label">Total Tasks</div>
-          <span className="stat-arrow">→</span>
+          <span className="stat-arrow"><ChevronRight size={14} /></span>
         </button>
         <button className="stat-card stat-card-interactive" onClick={() => onNavigate?.('board')} title="View board">
           <div className="stat-value">{stats.completedToday}</div>
           <div className="stat-label">Completed Today</div>
-          <span className="stat-arrow">→</span>
+          <span className="stat-arrow"><ChevronRight size={14} /></span>
         </button>
         <button className="stat-card stat-card-interactive" onClick={() => onNavigate?.('board')} title="View board">
           <div className="stat-value">{stats.completedThisWeek}</div>
           <div className="stat-label">This Week</div>
-          <span className="stat-arrow">→</span>
+          <span className="stat-arrow"><ChevronRight size={14} /></span>
         </button>
         <div className="stat-card stat-card-accent">
           <div className="stat-value">{pct}%</div>
@@ -238,7 +241,7 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
           <div className="activity-feed">
             {activity.map(item => (
               <div key={item.id} className="activity-item" style={{ '--activity-color': ACTION_COLORS[item.action] || '#666' }}>
-                <span className="activity-icon">{ACTION_ICONS[item.action] || '●'}</span>
+                <span className="activity-icon">{ACTION_ICONS[item.action] || <Circle size={12} fill="currentColor" />}</span>
                 <div className="activity-content">
                   <span className="activity-text">{item.details}</span>
                   <span className="activity-time">{timeAgo(item.created_at)}</span>

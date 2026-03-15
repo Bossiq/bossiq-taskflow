@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { X, Trash2 } from 'lucide-react';
 
 
 const API = '/api';
@@ -228,7 +229,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                       <span className="template-item-name">{tpl.name}</span>
                       <span className="template-item-meta">{tpl.priority} {tpl.label && `/ ${tpl.label}`}</span>
                     </button>
-                    <button type="button" className="btn-icon template-delete" onClick={() => deleteTemplate(tpl.id)} aria-label={`Delete template ${tpl.name}`}>×</button>
+                    <button type="button" className="btn-icon template-delete" onClick={() => deleteTemplate(tpl.id)} aria-label={`Delete template ${tpl.name}`}><Trash2 size={14} /></button>
                   </div>
                 ))}
               </div>
@@ -314,7 +315,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                 })}
                 {form.due_date && (
                   <button type="button" className="btn btn-sm btn-ghost date-shortcut date-clear"
-                    onClick={() => setForm(f => ({ ...f, due_date: '' }))}>✕</button>
+                    onClick={() => setForm(f => ({ ...f, due_date: '' }))}><X size={14} /></button>
                 )}
               </div>
             </div>
@@ -342,7 +343,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                       className="btn-icon subtask-delete"
                       onClick={() => deleteSubtask(sub.id)}
                       aria-label={`Delete subtask: ${sub.title}`}
-                    >×</button>
+                    ><Trash2 size={14} /></button>
                   </div>
                 ))}
                 <div className="subtask-add">
@@ -381,7 +382,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                         className="btn-icon comment-delete"
                         onClick={() => deleteComment(c.id)}
                         aria-label="Delete comment"
-                      >×</button>
+                      ><Trash2 size={14} /></button>
                     </div>
                     <p className="comment-body">{c.content}</p>
                   </div>
