@@ -14,8 +14,19 @@ export default function AuthPage({ onAuth }) {
   const [showPw, setShowPw] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('taskflow-theme');
+    return saved || 'dark';
+  });
   const formRef = useRef(null);
   const rateLimitTimerRef = useRef(null);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('taskflow-theme', next);
+  };
 
   // Countdown for rate limit
   useEffect(() => {
@@ -115,7 +126,6 @@ export default function AuthPage({ onAuth }) {
       <div className="auth-branding">
         <div className="auth-branding-content">
           <div className="auth-branding-logo">
-            <span className="auth-logo-icon">T</span>
             <span>TaskFlow</span>
           </div>
           <h2 className="auth-branding-title">Manage your work.<br/>Master your time.</h2>
@@ -133,9 +143,17 @@ export default function AuthPage({ onAuth }) {
 
       {/* Right side: Form */}
       <div className="auth-form-container">
+        <button
+          className="auth-theme-toggle"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        >
+          {theme === 'dark' ? '○' : '●'}
+        </button>
         <div className="auth-form-wrapper">
           <div className="auth-header-mobile">
-            <span className="auth-logo-icon">T</span> TaskFlow
+            TaskFlow
           </div>
           
           <h1 className="auth-form-title">

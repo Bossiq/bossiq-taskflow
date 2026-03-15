@@ -2025,11 +2025,36 @@ body.modal-open {
   border-left: 1px solid var(--border-color);
   box-shadow: -20px 0 60px rgba(0,0,0,0.5);
   z-index: 10;
+  position: relative;
 }
 
 .auth-form-wrapper {
   width: 100%;
   max-width: 400px;
+}
+
+.auth-theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  z-index: 20;
+}
+.auth-theme-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 
 .auth-header-mobile {
