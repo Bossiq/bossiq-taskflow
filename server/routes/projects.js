@@ -38,12 +38,12 @@ router.post('/', (req, res) => {
     const { name, color } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
     if (name.length > MAX_NAME_LEN) return res.status(400).json({ error: `Name must be ${MAX_NAME_LEN} characters or less` });
-    if (color && !COLOR_REGEX.test(color)) return res.status(400).json({ error: 'Color must be a valid hex color (e.g. #6366f1)' });
+    if (color && !COLOR_REGEX.test(color)) return res.status(400).json({ error: 'Color must be a valid hex color (e.g. #0ea5e9)' });
 
     const userId = req.user?.id || null;
     const result = db.prepare(
       'INSERT INTO projects (name, color, user_id) VALUES (?, ?, ?)'
-    ).run(name.trim(), color || '#6366f1', userId);
+    ).run(name.trim(), color || '#0ea5e9', userId);
 
     const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(project);

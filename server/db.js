@@ -26,7 +26,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    color TEXT DEFAULT '#6366f1',
+    color TEXT DEFAULT '#0ea5e9',
     user_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -52,7 +52,7 @@ db.exec(`
   );
 
   -- Seed a default project if none exist
-  INSERT OR IGNORE INTO projects (id, name, color) VALUES (1, 'My Project', '#6366f1');
+  INSERT OR IGNORE INTO projects (id, name, color) VALUES (1, 'My Project', '#0ea5e9');
 
   -- Subtasks / checklist items
   CREATE TABLE IF NOT EXISTS subtasks (

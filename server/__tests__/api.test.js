@@ -51,7 +51,7 @@ describe('API', () => {
     it('POST /api/projects rejects empty name', async () => {
       const res = await request(app)
         .post('/api/projects')
-        .send({ name: '', color: '#6366f1' });
+        .send({ name: '', color: '#0ea5e9' });
       expect(res.status).toBe(400);
       expect(res.body.error).toContain('required');
     });
