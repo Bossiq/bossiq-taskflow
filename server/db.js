@@ -105,4 +105,10 @@ catch { db.exec("ALTER TABLE activity_log ADD COLUMN user_id INTEGER"); }
 try { db.prepare("SELECT is_guest FROM users LIMIT 1").get(); }
 catch { db.exec("ALTER TABLE users ADD COLUMN is_guest INTEGER DEFAULT 0"); }
 
+try { db.prepare("SELECT recurrence_rule FROM tasks LIMIT 1").get(); }
+catch { db.exec("ALTER TABLE tasks ADD COLUMN recurrence_rule TEXT DEFAULT NULL"); }
+
+try { db.prepare("SELECT recurrence_parent_id FROM tasks LIMIT 1").get(); }
+catch { db.exec("ALTER TABLE tasks ADD COLUMN recurrence_parent_id INTEGER DEFAULT NULL"); }
+
 export default db;

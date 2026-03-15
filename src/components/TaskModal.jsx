@@ -25,13 +25,18 @@ function timeAgo(dateStr) {
  * @param {{ task: object|null, onSave: function, onClose: function }} props
  */
 export default function TaskModal({ task, onSave, onClose, getHeaders }) {
-  const defaultForm = { title: '', description: '', priority: 'medium', label: '', due_date: '', status: 'todo' };
+  const defaultForm = { title: '', description: '', priority: 'medium', label: '', due_date: '', status: 'todo', recurrence_rule: '' };
   const [form, setForm] = useState(defaultForm);
   const [subtasks, setSubtasks] = useState([]);
   const [newSubtask, setNewSubtask] = useState('');
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [activityLogs, setActivityLogs] = useState([]);
+  const [templates, setTemplates] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('taskflow-templates') || '[]'); }
+    catch { return []; }
+  });
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
@@ -45,7 +50,8 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
         priority: task.priority || 'medium',
         label: task.label || '',
         due_date: task.due_date || '',
-        status: task.status || 'todo'
+        status: task.status || 'todo',
+        recurrence_rule: task.recurrence_rule || ''
       });
       // Fetch subtasks for existing tasks
       fetch(`${API}/tasks/${task.id}/subtasks`, { headers, credentials: 'include' })
@@ -102,7 +108,27 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return;
-    onSave({ ...form, id: task?.id });
+    onSave({ ...form, recurrence_rule: form.recurrence_rule || null, id: task?.id });
+  };
+
+  const saveTemplate = () => {
+    const name = prompt('Template name:');
+    if (!name?.trim()) return;
+    const tpl = { id: Date.now(), name: name.trim(), title: form.title, description: form.description, priority: form.priority, label: form.label, recurrence_rule: form.recurrence_rule || null };
+    const updated = [...templates, tpl];
+    setTemplates(updated);
+    localStorage.setItem('taskflow-templates', JSON.stringify(updated));
+  };
+
+  const loadTemplate = (tpl) => {
+    setForm(f => ({ ...f, title: tpl.title || '', description: tpl.description || '', priority: tpl.priority || 'medium', label: tpl.label || '', recurrence_rule: tpl.recurrence_rule || '' }));
+    setShowTemplates(false);
+  };
+
+  const deleteTemplate = (id) => {
+    const updated = templates.filter(t => t.id !== id);
+    setTemplates(updated);
+    localStorage.setItem('taskflow-templates', JSON.stringify(updated));
   };
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
@@ -187,6 +213,29 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
         aria-labelledby="modal-title"
       >
         <h2 id="modal-title" className="modal-header-title">{task?.id ? 'Edit Task' : 'New Task'}</h2>
+
+        {/* Template picker — only for new tasks */}
+        {!task?.id && templates.length > 0 && (
+          <div className="template-picker">
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setShowTemplates(!showTemplates)}>
+              {showTemplates ? 'Hide Templates' : 'From Template'} ({templates.length})
+            </button>
+            {showTemplates && (
+              <div className="template-list">
+                {templates.map(tpl => (
+                  <div key={tpl.id} className="template-item">
+                    <button type="button" className="template-item-btn" onClick={() => loadTemplate(tpl)}>
+                      <span className="template-item-name">{tpl.name}</span>
+                      <span className="template-item-meta">{tpl.priority} {tpl.label && `/ ${tpl.label}`}</span>
+                    </button>
+                    <button type="button" className="btn-icon template-delete" onClick={() => deleteTemplate(tpl.id)} aria-label={`Delete template ${tpl.name}`}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group floating">
             <input id="task-title" className="form-input" value={form.title} onChange={set('title')}
@@ -320,7 +369,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
           {/* Comments section — only for existing tasks */}
           {task?.id && (
             <div className="form-group">
-              <label className="section-label">💬 Comments ({comments.length})</label>
+              <label className="section-label">Comments ({comments.length})</label>
               <div className="comment-thread">
                 {comments.map(c => (
                   <div key={c.id} className="comment-item">
@@ -366,7 +415,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
           {/* Activity Timeline — only for existing tasks */}
           {task?.id && activityLogs.length > 0 && (
             <div className="form-group">
-              <label className="section-label">📜 Activity History</label>
+              <label className="section-label">Activity History</label>
               <div className="activity-timeline">
                 {activityLogs.map(log => (
                   <div key={log.id} className="activity-item">
@@ -383,7 +432,35 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             </div>
           )}
 
+          {/* Recurrence selector */}
+          <div className="form-group">
+            <label className="section-label">Repeat</label>
+            <div className="recurrence-selector">
+              {[
+                { val: '', label: 'None' },
+                { val: 'daily', label: 'Daily' },
+                { val: 'weekly', label: 'Weekly' },
+                { val: 'monthly', label: 'Monthly' }
+              ].map(r => (
+                <button
+                  key={r.val}
+                  type="button"
+                  className={`recurrence-btn ${(form.recurrence_rule || '') === r.val ? 'active' : ''}`}
+                  onClick={() => setForm(f => ({ ...f, recurrence_rule: r.val }))}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="modal-actions">
+            {!task?.id && (
+              <button type="button" className="btn btn-sm btn-ghost" onClick={saveTemplate} disabled={!form.title.trim()} title="Save current form as reusable template">
+                Save Template
+              </button>
+            )}
+            <div style={{ flex: 1 }} />
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={!form.title.trim()}>
               {task?.id ? 'Save Changes' : 'Create Task'}

@@ -168,7 +168,14 @@ export default function App() {
   // Initial load (after auth check)
   useEffect(() => {
     if (authChecked) {
-      Promise.all([fetchTasks(), fetchProjects()]).finally(() => setLoading(false));
+      Promise.all([fetchTasks(), fetchProjects()])
+        .then(() => {
+          // Process recurring tasks — auto-create new instances of completed recurring tasks
+          return fetch(`${API}/tasks/process-recurring`, { method: 'POST', headers: getHeaders(), credentials: 'include' });
+        })
+        .then(() => fetchTasks()) // Re-fetch to include newly created recurring instances
+        .catch(() => {})
+        .finally(() => setLoading(false));
     }
   }, [authChecked]);
 

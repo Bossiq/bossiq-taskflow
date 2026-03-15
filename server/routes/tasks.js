@@ -158,7 +158,7 @@ router.post('/', (req, res) => {
     const errors = validateTaskInput(req.body, true);
     if (errors.length > 0) return res.status(400).json({ error: errors.join('; ') });
 
-    const { title, description, status, priority, label, due_date, project_id } = req.body;
+    const { title, description, status, priority, label, due_date, project_id, recurrence_rule } = req.body;
 
     const maxPos = db.prepare(
       'SELECT COALESCE(MAX(position), -1) as max FROM tasks WHERE status = ?'
@@ -167,8 +167,8 @@ router.post('/', (req, res) => {
     const userId = req.user?.id || null;
 
     const result = db.prepare(`
-      INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id, recurrence_rule)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       title.trim(),
       (description || '').trim(),
@@ -178,7 +178,8 @@ router.post('/', (req, res) => {
       due_date || null,
       project_id || 1,
       maxPos.max + 1,
-      userId
+      userId,
+      recurrence_rule || null
     );
 
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
@@ -195,7 +196,7 @@ router.put('/:id', (req, res) => {
     const errors = validateTaskInput(req.body, false);
     if (errors.length > 0) return res.status(400).json({ error: errors.join('; ') });
 
-    const { title, description, status, priority, label, due_date, project_id } = req.body;
+    const { title, description, status, priority, label, due_date, project_id, recurrence_rule } = req.body;
     const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Task not found' });
 
@@ -205,7 +206,7 @@ router.put('/:id', (req, res) => {
 
     db.prepare(`
       UPDATE tasks SET title=?, description=?, status=?, priority=?, label=?, due_date=?, project_id=?,
-        updated_at=CURRENT_TIMESTAMP, completed_at=?
+        updated_at=CURRENT_TIMESTAMP, completed_at=?, recurrence_rule=?
       WHERE id=?
     `).run(
       (title ?? existing.title).trim(),
@@ -216,6 +217,7 @@ router.put('/:id', (req, res) => {
       due_date !== undefined ? (due_date || null) : existing.due_date,
       project_id ?? existing.project_id,
       completedAt,
+      recurrence_rule !== undefined ? (recurrence_rule || null) : existing.recurrence_rule,
       req.params.id
     );
 
@@ -251,6 +253,70 @@ router.patch('/:id/move', (req, res) => {
     const action = task.status === 'done' && existing.status !== 'done' ? 'completed' : 'moved';
     logActivity(task.id, action, `${action === 'completed' ? 'Completed' : 'Moved'} task "${task.title}" to ${status}`);
     res.json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /process-recurring — Auto-create new instances of completed recurring tasks
+ * Called on app load. Creates a new 'todo' copy with the next due date.
+ */
+router.post('/process-recurring', (req, res) => {
+  try {
+    const userFilter = req.user ? ' AND t.user_id = ?' : '';
+    const userParams = req.user ? [req.user.id] : [];
+
+    // Find completed recurring tasks that don't already have a child
+    const recurring = db.prepare(`
+      SELECT t.* FROM tasks t
+      WHERE t.status = 'done'
+        AND t.recurrence_rule IS NOT NULL
+        AND t.recurrence_rule != ''
+        AND NOT EXISTS (
+          SELECT 1 FROM tasks child WHERE child.recurrence_parent_id = t.id
+        )
+        ${userFilter}
+    `).all(...userParams);
+
+    let created = 0;
+    const processAll = db.transaction(() => {
+      for (const task of recurring) {
+        // Calculate next due date
+        let nextDue = null;
+        if (task.due_date) {
+          const d = new Date(task.due_date);
+          if (task.recurrence_rule === 'daily') d.setDate(d.getDate() + 1);
+          else if (task.recurrence_rule === 'weekly') d.setDate(d.getDate() + 7);
+          else if (task.recurrence_rule === 'monthly') d.setMonth(d.getMonth() + 1);
+          nextDue = d.toISOString().split('T')[0];
+        }
+
+        const maxPos = db.prepare(
+          "SELECT COALESCE(MAX(position), -1) as max FROM tasks WHERE status = 'todo'"
+        ).get();
+
+        db.prepare(`
+          INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id, recurrence_rule, recurrence_parent_id)
+          VALUES (?, ?, 'todo', ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          task.title,
+          task.description || '',
+          task.priority || 'medium',
+          task.label || '',
+          nextDue,
+          task.project_id,
+          maxPos.max + 1,
+          task.user_id,
+          task.recurrence_rule,
+          task.id
+        );
+        created++;
+      }
+    });
+
+    processAll();
+    res.json({ processed: recurring.length, created });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
