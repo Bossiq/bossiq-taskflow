@@ -1,6 +1,6 @@
 # ⚡ TaskFlow — Full-Stack Kanban Task Tracker
 
-A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, real-time statistics dashboard, markdown-powered descriptions, subtask checklists, and comprehensive security hardening.
+A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, interactive overview with real-time statistics, markdown-powered descriptions, subtask checklists, and comprehensive security hardening.
 
 🔗 **[Live Demo → bossiq-taskflow.vercel.app](https://bossiq-taskflow.vercel.app)**
 
@@ -24,14 +24,14 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Task Sorting** — Sort by priority, due date, newest, oldest, or alphabetically
 - **Task Filtering** — Priority filter chips and label dropdown, combinable with sorting
 - **Batch Actions** — Select multiple tasks → bulk move, delete, or reprioritize
-- **Statistics Dashboard** — Donut chart, priority bars, overdue warnings, productivity streak
+- **Interactive Overview** — Welcome greeting, donut chart, priority bars, overdue warnings, productivity streak, clickable stat cards
 - **Enterprise Activity Log** — Micro-audit trail tracking all task creation, updates, and movements
 - **Dark/Light Theme** — Toggle with persistent localStorage preference
 - **Search** — Debounced full-text search across all tasks
 - **CSV Export** — Export all tasks to downloadable CSV file
 - **Calendar View** — Monthly grid with priority dots, date selection, overdue indicators
 - **Task Comments** — Threaded comment system with author display and relative timestamps
-- **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle dashboard, `?` shortcut overlay, `Esc` close modal
+- **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle overview, `?` shortcut overlay, `Esc` close modal
 - **Quick Status Actions** — Hover-visible buttons for instant status changes on task cards
 - **Markdown Editor** — Write/Preview tabs with live markdown rendering in descriptions
 
@@ -95,7 +95,7 @@ taskflow/
 │       ├── TaskCard.jsx        # Task card (progress bar, timeAgo, drag)
 │       ├── TaskModal.jsx       # Create/edit modal (subtask checklist, comments)
 │       ├── Sidebar.jsx         # Navigation + project management
-│       ├── Dashboard.jsx       # Statistics, overdue warnings, shortcuts
+│       ├── Dashboard.jsx       # Interactive overview, stats, quick actions
 │       ├── Calendar.jsx        # Monthly calendar view with task dots
 │       ├── AuthPage.jsx        # Login/register with glassmorphism UI
 │       ├── ConfirmDialog.jsx   # Confirmation dialog (role=alertdialog)
