@@ -38,6 +38,9 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Recurring Tasks** — Set tasks to auto-recreate on Daily, Weekly, or Monthly schedules
 - **Gantt Chart** — Interactive timeline view with zoom, status grouping, today marker, and overdue highlights
 - **Notification Center** — Bell icon with unread badge, due-today/overdue/upcoming alerts, recent activity feed
+- **Real-Time Sync** — Socket.IO WebSocket layer broadcasts task changes to all connected clients instantly
+- **PostgreSQL Support** — Auto-switches between SQLite (dev) and PostgreSQL (prod) via `DATABASE_URL`
+- **Email Notifications** — SMTP-based due-date reminders with branded HTML templates, cron-compatible endpoint
 
 ### Production Quality
 - **Zero-Trust Architecture** — Helmet.js headers, strict CORS, express-rate-limit, HTML sanitization, CSRF protection
