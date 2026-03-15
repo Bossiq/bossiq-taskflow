@@ -555,9 +555,7 @@ export default function App() {
             )}
           </div>
           <NotificationBell tasks={tasks} getHeaders={getHeaders} />
-          {view === 'board' && (
-            <button id="new-task-btn" className="btn btn-primary" onClick={openNew}>+ New Task</button>
-          )}
+          <button id="new-task-btn" className="btn btn-primary" onClick={openNew}>+ New Task</button>
         </div>
 
         {view === 'board' ? (

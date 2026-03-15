@@ -3290,6 +3290,24 @@ body.modal-open {
 
   /* Sidebar shortcut hints hidden on mobile */
   .sidebar-shortcut { display: none; }
+
+  /* Notification panel: full width on mobile */
+  .notif-panel {
+    position: fixed;
+    top: 56px;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-height: 60vh;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    border-top: none;
+  }
+
+  /* Gantt chart mobile */
+  .gantt-labels { min-width: 120px; max-width: 120px; }
+  .gantt-task-label span { font-size: 0.7rem; max-width: 100px; }
+  .gantt-controls { padding: 8px 12px; gap: 8px; font-size: 0.75rem; }
+  .gantt-chart { padding: 0; }
 }
 
 /* ===== RESPONSIVE: SMALL PHONES (≤480px) ===== */
@@ -3307,6 +3325,7 @@ body.modal-open {
   .auth-branding-title { font-size: 1.6rem; }
   .overdue-banner { flex-direction: column; text-align: center; }
   .form-row { flex-direction: column; gap: 0; }
+  .notif-panel { max-height: 50vh; }
 }
 
 /* ===== DISABLED BUTTON STATE ===== */
