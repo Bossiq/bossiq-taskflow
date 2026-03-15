@@ -46,6 +46,10 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
           <span className="nav-icon">▦</span>
           {isOpen && <span className="nav-text">Calendar</span>}
         </button>
+        <button className={`nav-item ${view === 'gantt' ? 'active' : ''}`} onClick={() => setView('gantt')} title="Timeline">
+          <span className="nav-icon">▬</span>
+          {isOpen && <span className="nav-text">Timeline</span>}
+        </button>
 
         <div className="nav-section-title">
           {isOpen ? 'Projects' : '---'}

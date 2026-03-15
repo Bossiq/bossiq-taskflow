@@ -9,6 +9,7 @@ import AuthPage from './components/AuthPage.jsx';
 const Board = lazy(() => import('./components/Board.jsx'));
 const Dashboard = lazy(() => import('./components/Dashboard.jsx'));
 const Calendar = lazy(() => import('./components/Calendar.jsx'));
+const Gantt = lazy(() => import('./components/Gantt.jsx'));
 
 const API = '/api';
 
@@ -480,9 +481,13 @@ export default function App() {
   const currentProjectObj = projects.find(p => p.id === currentProject);
   const pageTitle = view === 'dashboard'
     ? 'Overview'
-    : currentProject
-      ? (currentProjectObj?.name || 'Tasks')
-      : 'All Tasks';
+    : view === 'calendar'
+      ? 'Calendar'
+      : view === 'gantt'
+        ? 'Timeline'
+        : currentProject
+          ? (currentProjectObj?.name || 'Tasks')
+          : 'All Tasks';
   const taskCount = tasks.length;
 
 
@@ -548,6 +553,10 @@ export default function App() {
         ) : view === 'calendar' ? (
           <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Calendar...</p></div>}>
             <Calendar tasks={tasks} onEdit={openEdit} onNew={openNew} />
+          </Suspense>
+        ) : view === 'gantt' ? (
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Timeline...</p></div>}>
+            <Gantt tasks={tasks} onEdit={openEdit} />
           </Suspense>
         ) : (
           <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Overview...</p></div>}>
