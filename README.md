@@ -37,6 +37,7 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Task Templates** — Save and reuse task configurations (title, priority, label, recurrence) with one click
 - **Recurring Tasks** — Set tasks to auto-recreate on Daily, Weekly, or Monthly schedules
 - **Gantt Chart** — Interactive timeline view with zoom, status grouping, today marker, and overdue highlights
+- **Notification Center** — Bell icon with unread badge, due-today/overdue/upcoming alerts, recent activity feed
 
 ### Production Quality
 - **Zero-Trust Architecture** — Helmet.js headers, strict CORS, express-rate-limit, HTML sanitization, CSRF protection
