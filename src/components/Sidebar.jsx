@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-const PROJECT_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#f97316'];
+const PROJECT_COLORS = ['#0ea5e9', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#f97316', '#8b5cf6'];
 
-export default function Sidebar({ view, setView, projects, currentProject, setCurrentProject, onCreateProject, onDeleteProject, onExportCSV, user, onLogout, isOpen, onToggle }) {
+export default function Sidebar({ view, setView, projects, currentProject, setCurrentProject, onCreateProject, onDeleteProject, onExportCSV, user, onLogout, isOpen, onToggle, onOpenSettings }) {
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectColor, setNewProjectColor] = useState('#6366f1');
+  const [newProjectColor, setNewProjectColor] = useState('#0ea5e9');
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('taskflow-theme');
     return saved || 'dark';
@@ -130,6 +130,10 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
         <button className="theme-toggle" onClick={onExportCSV} aria-label="Export tasks to CSV" title="Export CSV">
           <span className="nav-icon">↓</span>
           {isOpen && <span className="nav-text">Export CSV</span>}
+        </button>
+        <button className="theme-toggle" onClick={onOpenSettings} aria-label="Settings" title="Settings">
+          <span className="nav-icon">⚙</span>
+          {isOpen && <span className="nav-text">Settings</span>}
         </button>
         <button
           className="theme-toggle"

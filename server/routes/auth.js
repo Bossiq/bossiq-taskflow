@@ -181,10 +181,100 @@ router.get('/me', requireAuth, (req, res) => {
   try {
     const user = db.prepare('SELECT id, username, email, created_at FROM users WHERE id = ?').get(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
+    const isGuest = db.prepare('SELECT is_guest FROM users WHERE id = ?').get(req.user.id);
+    res.json({ ...user, is_guest: isGuest?.is_guest === 1 });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+/**
+ * PUT /api/auth/password — Change password (requires current password)
+ */
+router.put('/password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+    if (newPassword.length < PASSWORD_MIN) {
+      return res.status(400).json({ error: `New password must be at least ${PASSWORD_MIN} characters` });
+    }
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ error: 'New password must be different from current password' });
+    }
+
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Verify current password
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Hash and save new password
+    const salt = await bcrypt.genSalt(12);
+    const newHash = await bcrypt.hash(newPassword, salt);
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/auth/account — Delete account and all associated data
+ * Requires password confirmation for security.
+ */
+router.delete('/account', requireAuth, async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Guest accounts don't need password confirmation
+    if (user.is_guest !== 1) {
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required to delete your account' });
+      }
+      const valid = await bcrypt.compare(password, user.password_hash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Password is incorrect' });
+      }
+    }
+
+    // Delete user — CASCADE rules handle tasks, projects, comments, activity
+    db.prepare('DELETE FROM users WHERE id = ?').run(req.user.id);
+
+    // Clear auth cookie
+    res.clearCookie('taskflow_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    });
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/auth/csrf-token — Generate CSRF token (double-submit cookie pattern)
+ */
+router.get('/csrf-token', (req, res) => {
+  const token = crypto.randomBytes(32).toString('hex');
+  res.cookie('taskflow_csrf', token, {
+    httpOnly: false, // Must be readable by JS for double-submit
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
+  res.json({ csrfToken: token });
 });
 
 export default router;

@@ -39,6 +39,8 @@ export default function App() {
   const [coldStartMsg, setColdStartMsg] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [csrfToken, setCsrfToken] = useState(null);
   const isMobile = () => window.innerWidth <= 768;
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const toastIdRef = useRef(0);
@@ -60,12 +62,22 @@ export default function App() {
       document.body.classList.remove('modal-open');
     }
     return () => document.body.classList.remove('modal-open');
-  }, [showModal, confirmDialog, showShortcuts]);
+  }, [showModal, confirmDialog, showShortcuts, showSettings]);
+
+  // ── CSRF token fetch ──
+  useEffect(() => {
+    fetch(`${API}/auth/csrf-token`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => setCsrfToken(d.csrfToken))
+      .catch(() => { /* non-critical */ });
+  }, []);
 
   // ── Auth helpers ──
   const getHeaders = useCallback(() => {
-    return { 'Content-Type': 'application/json' };
-  }, []);
+    const h = { 'Content-Type': 'application/json' };
+    if (csrfToken) h['X-CSRF-Token'] = csrfToken;
+    return h;
+  }, [csrfToken]);
 
   // Check saved auth on mount
   useEffect(() => {
@@ -482,6 +494,7 @@ export default function App() {
         onLogout={handleLogout}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onOpenSettings={() => setShowSettings(true)}
       />
       {/* Mobile backdrop overlay */}
       {sidebarOpen && (
@@ -555,11 +568,119 @@ export default function App() {
         ))}
       </div>
 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowSettings(false)}>
+          <div className="modal-card" style={{ maxWidth: 480 }}>
+            <div className="modal-header-bar"></div>
+            <h2 className="modal-header-title">Settings</h2>
+
+            {/* Password Change — only for non-guest users */}
+            {user && !user.is_guest && (
+              <form
+                className="settings-section"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const fd = new FormData(e.target);
+                  const currentPassword = fd.get('currentPassword');
+                  const newPassword = fd.get('newPassword');
+                  const confirmPassword = fd.get('confirmPassword');
+                  if (newPassword !== confirmPassword) {
+                    addToast('Passwords do not match', 'error');
+                    return;
+                  }
+                  try {
+                    const res = await fetch(`${API}/auth/password`, {
+                      method: 'PUT',
+                      headers: getHeaders(),
+                      credentials: 'include',
+                      body: JSON.stringify({ currentPassword, newPassword })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error);
+                    addToast('Password updated successfully');
+                    e.target.reset();
+                  } catch (err) {
+                    addToast(err.message, 'error');
+                  }
+                }}
+              >
+                <h3 className="settings-section-title">Change Password</h3>
+                <div className="form-group floating">
+                  <input className="form-input" type="password" name="currentPassword" placeholder=" " required minLength={6} />
+                  <label>Current Password</label>
+                </div>
+                <div className="form-group floating">
+                  <input className="form-input" type="password" name="newPassword" placeholder=" " required minLength={6} />
+                  <label>New Password</label>
+                </div>
+                <div className="form-group floating">
+                  <input className="form-input" type="password" name="confirmPassword" placeholder=" " required minLength={6} />
+                  <label>Confirm New Password</label>
+                </div>
+                <button className="btn btn-primary" type="submit" style={{ width: '100%' }}>Update Password</button>
+              </form>
+            )}
+
+            {/* Account Deletion */}
+            <div className="settings-section settings-danger">
+              <h3 className="settings-section-title" style={{ color: 'var(--danger)' }}>Danger Zone</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              <button
+                className="btn btn-danger"
+                style={{ width: '100%' }}
+                onClick={() => {
+                  setShowSettings(false);
+                  setConfirmDialog({
+                    title: 'Delete Account',
+                    message: user?.is_guest
+                      ? 'This will permanently delete your guest session and all tasks. Continue?'
+                      : 'Enter your password to confirm account deletion. All data will be permanently removed.',
+                    confirmLabel: 'Delete My Account',
+                    onConfirm: async () => {
+                      const password = user?.is_guest ? undefined : prompt('Enter your password to confirm:');
+                      if (!user?.is_guest && !password) return;
+                      try {
+                        const res = await fetch(`${API}/auth/account`, {
+                          method: 'DELETE',
+                          headers: getHeaders(),
+                          credentials: 'include',
+                          body: JSON.stringify({ password })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error);
+                        addToast('Account deleted');
+                        handleLogout();
+                      } catch (err) {
+                        addToast(err.message, 'error');
+                      }
+                    },
+                    onCancel: () => setConfirmDialog(null)
+                  });
+                }}
+              >
+                Delete Account
+              </button>
+            </div>
+
+            <button
+              className="btn btn-ghost"
+              style={{ width: '100%', marginTop: 16 }}
+              onClick={() => setShowSettings(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Keyboard shortcut overlay */}
       {showShortcuts && (
         <div className="shortcut-overlay" onClick={(e) => e.target === e.currentTarget && setShowShortcuts(false)}>
           <div className="shortcut-modal">
-            <h2>⌨️ Keyboard Shortcuts</h2>
+            <h2>Keyboard Shortcuts</h2>
             <div className="shortcut-modal-grid">
               <kbd>N</kbd> <span>Create new task</span>
               <kbd>/</kbd> <span>Focus search bar</span>

@@ -1,4 +1,4 @@
-# ⚡ TaskFlow — Full-Stack Kanban Task Tracker
+# TaskFlow — Full-Stack Kanban Task Tracker
 
 A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, interactive overview with real-time statistics, markdown-powered descriptions, subtask checklists, and comprehensive security hardening.
 
@@ -36,12 +36,15 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Markdown Editor** — Write/Preview tabs with live markdown rendering in descriptions
 
 ### Production Quality
-- **🛡️ Zero-Trust Architecture** — Helmet.js headers, strict CORS, express-rate-limit, and HTML sanitization
-- **🔐 Authentication** — JWT HttpOnly secure cookie sessions, bcrypt password hashing (12 rounds)
-- **♿ Accessibility** — Keyboard draggable cards, ARIA roles, focus traps, screen reader support
-- **⚡ Performance** — Gzip compression, search debouncing, optimized React re-renders, WAL-mode SQLite
-- **📱 Progressive Web App (PWA)** — Installable on iOS/Android/Desktop directly from the browser
-- **📱 Responsive** — Works on desktop, tablet, and mobile
+- **Zero-Trust Architecture** — Helmet.js headers, strict CORS, express-rate-limit, HTML sanitization, CSRF protection
+- **Authentication** — JWT HttpOnly secure cookie sessions, bcrypt password hashing (12 rounds)
+- **CSRF Protection** — Double-submit cookie pattern with X-CSRF-Token header verification
+- **Account Management** — Password change, account deletion with password confirmation
+- **Guest Isolation** — Anonymous guest sessions with per-user data separation
+- **Accessibility** — Keyboard draggable cards, ARIA roles, focus traps, screen reader support
+- **Performance** — Gzip compression, search debouncing, optimized React re-renders, WAL-mode SQLite
+- **Progressive Web App (PWA)** — Installable on iOS/Android/Desktop directly from the browser
+- **Responsive** — Works on desktop, tablet, and mobile
 
 ## 🛠️ Tech Stack
 

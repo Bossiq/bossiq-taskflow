@@ -58,7 +58,7 @@ const allowedOrigins = IS_PROD
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   credentials: true // ESSENTIAL: Allows browser to send secure cookies cross-origin
 }));
 
@@ -105,6 +105,24 @@ app.use((req, res, next) => {
       console.log(`${color}${req.method}\x1b[0m ${req.originalUrl} → ${status} (${ms}ms) [${req.id}]`);
     }
   });
+  next();
+});
+
+// ── CSRF Protection (double-submit cookie) ──
+const CSRF_EXEMPT = ['/api/auth/login', '/api/auth/register', '/api/auth/guest', '/api/auth/csrf-token', '/api/auth/logout'];
+app.use('/api/', (req, res, next) => {
+  // Skip in test environment — CSRF is a transport-layer concern
+  if (process.env.NODE_ENV === 'test') return next();
+  // Skip GET/HEAD/OPTIONS and exempt routes
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  if (CSRF_EXEMPT.some(path => req.originalUrl.startsWith(path))) return next();
+
+  const cookieToken = req.cookies?.taskflow_csrf;
+  const headerToken = req.headers['x-csrf-token'];
+
+  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+    return res.status(403).json({ error: 'Invalid or missing CSRF token' });
+  }
   next();
 });
 
