@@ -34,6 +34,8 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle overview, `?` shortcut overlay, `Esc` close modal
 - **Quick Status Actions** — Hover-visible buttons for instant status changes on task cards
 - **Markdown Editor** — Write/Preview tabs with live markdown rendering in descriptions
+- **Task Templates** — Save and reuse task configurations (title, priority, label, recurrence) with one click
+- **Recurring Tasks** — Set tasks to auto-recreate on Daily, Weekly, or Monthly schedules
 
 ### Production Quality
 - **Zero-Trust Architecture** — Helmet.js headers, strict CORS, express-rate-limit, HTML sanitization, CSRF protection
