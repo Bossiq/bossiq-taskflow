@@ -33,7 +33,7 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-export default function Dashboard({ refreshKey, getHeaders }) {
+export default function Dashboard({ refreshKey, getHeaders, overdueTasks: externalOverdue }) {
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
   const [streak, setStreak] = useState(0);
@@ -53,18 +53,23 @@ export default function Dashboard({ refreshKey, getHeaders }) {
       .then(r => r.json())
       .then(data => setStreak(data?.streak || 0))
       .catch(() => {});
-    fetch('/api/tasks', { headers, credentials: 'include' })
-      .then(r => r.json())
-      .then(data => {
-        if (!Array.isArray(data)) return;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        setOverdue(data.filter(t =>
-          t.due_date && t.status !== 'done' && new Date(t.due_date) < today
-        ));
-      })
-      .catch(() => {});
-  }, [refreshKey]);
+    // Use external overdue list if provided, else fetch
+    if (externalOverdue) {
+      setOverdue(externalOverdue);
+    } else {
+      fetch('/api/tasks', { headers, credentials: 'include' })
+        .then(r => r.json())
+        .then(data => {
+          if (!Array.isArray(data)) return;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          setOverdue(data.filter(t =>
+            t.due_date && t.status !== 'done' && new Date(t.due_date) < today
+          ));
+        })
+        .catch(() => {});
+    }
+  }, [refreshKey, externalOverdue]);
 
   if (!stats) return <div className="dashboard"><p style={{ color: 'var(--text-muted)' }}>Loading stats...</p></div>;
 
@@ -97,7 +102,7 @@ export default function Dashboard({ refreshKey, getHeaders }) {
             <div className="overdue-list">
               {overdue.slice(0, 3).map(t => (
                 <span key={t.id} className="overdue-tag">
-                  {t.title} <small>({new Date(t.due_date + 'T00:00:00').toLocaleDateString()})</small>
+                  {t.title} <small>({new Date(t.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</small>
                 </span>
               ))}
               {overdue.length > 3 && <span className="overdue-tag">+{overdue.length - 3} more</span>}
@@ -194,13 +199,9 @@ export default function Dashboard({ refreshKey, getHeaders }) {
       )}
 
       <div className="shortcuts-help">
-        <h3>⌨️ Keyboard Shortcuts</h3>
-        <div className="shortcut-grid">
-          <kbd>N</kbd> <span>New task</span>
-          <kbd>/</kbd> <span>Focus search</span>
-          <kbd>D</kbd> <span>Toggle dashboard</span>
-          <kbd>Esc</kbd> <span>Close modal</span>
-        </div>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
+          Press <kbd>?</kbd> anywhere to see all keyboard shortcuts
+        </p>
       </div>
     </div>
   );

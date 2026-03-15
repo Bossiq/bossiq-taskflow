@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const API = '/api';
 
@@ -12,11 +12,32 @@ export default function AuthPage({ onAuth }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [shaking, setShaking] = useState(false);
+  const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
+  const formRef = useRef(null);
+  const rateLimitTimerRef = useRef(null);
 
-  const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
+  // Countdown for rate limit
+  useEffect(() => {
+    if (rateLimitSeconds > 0) {
+      rateLimitTimerRef.current = setTimeout(() => setRateLimitSeconds(s => s - 1), 1000);
+      return () => clearTimeout(rateLimitTimerRef.current);
+    }
+  }, [rateLimitSeconds]);
+
+  const set = (key) => (e) => {
+    setForm(f => ({ ...f, [key]: e.target.value }));
+    if (error) setError(''); // Clear error as user types
+  };
+
+  const triggerShake = () => {
+    setShaking(true);
+    setTimeout(() => setShaking(false), 500);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (rateLimitSeconds > 0) return; // Block while rate-limited
     setError('');
     setLoading(true);
 
@@ -29,25 +50,42 @@ export default function AuthPage({ onAuth }) {
       const res = await fetch(`${API}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // accept secure httpOnly cookie from backend
+        credentials: 'include',
         body: JSON.stringify(body)
       });
 
-      const data = await res.json();
+      // Handle rate limiting (429)
+      if (res.status === 429) {
+        setRateLimitSeconds(60); // 60s cooldown
+        setError('Too many attempts. Please wait before trying again.');
+        triggerShake();
+        return;
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        setError('Server returned an unexpected response. Please try again.');
+        triggerShake();
+        return;
+      }
 
       if (!res.ok) {
         setError(data.error || 'Something went wrong');
-        setLoading(false);
+        triggerShake();
         return;
       }
 
       // Store user metadata only (JWT is now safely handled by the browser cookie)
       localStorage.setItem('taskflow-user', JSON.stringify(data.user));
-      onAuth(data.user); // No longer passing raw token back to App.js
+      onAuth(data.user);
     } catch {
       setError('Network error — is the server running?');
+      triggerShake();
+    } finally {
+      setLoading(false); // ALWAYS reset loading, no matter what
     }
-    setLoading(false);
   };
 
   const handleSkip = () => {
@@ -57,7 +95,7 @@ export default function AuthPage({ onAuth }) {
   const handleTabSwitch = (newMode) => {
     setMode(newMode);
     setError('');
-    // Clear credentials to prevent accidental submissions with old data
+    setRateLimitSeconds(0);
     setForm({ username: '', email: '', password: '' });
   };
 
@@ -113,7 +151,7 @@ export default function AuthPage({ onAuth }) {
             <div className="auth-tab-indicator" style={{ left: mode === 'login' ? '0%' : '50%' }} />
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form onSubmit={handleSubmit} className={`auth-form ${shaking ? 'auth-shake' : ''}`} ref={formRef}>
             <div className="form-group floating">
               <input
                 id="auth-username"
@@ -124,6 +162,7 @@ export default function AuthPage({ onAuth }) {
                 required
                 autoFocus
                 autoComplete="username"
+                disabled={loading}
               />
               <label htmlFor="auth-username">Username</label>
             </div>
@@ -139,6 +178,7 @@ export default function AuthPage({ onAuth }) {
                   placeholder=" "
                   required
                   autoComplete="email"
+                  disabled={loading}
                 />
                 <label htmlFor="auth-email">Email</label>
               </div>
@@ -156,6 +196,7 @@ export default function AuthPage({ onAuth }) {
                   required
                   minLength={mode === 'register' ? 6 : undefined}
                   autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  disabled={loading}
                 />
                 <label htmlFor="auth-password">Password</label>
                 <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
@@ -167,11 +208,20 @@ export default function AuthPage({ onAuth }) {
             {error && (
               <div className="auth-error" role="alert">
                 ⚠️ {error}
+                {rateLimitSeconds > 0 && (
+                  <div className="auth-rate-limit-timer">
+                    Try again in {rateLimitSeconds}s
+                  </div>
+                )}
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-              {loading ? '...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+            <button type="submit" className="btn btn-primary auth-submit" disabled={loading || rateLimitSeconds > 0}>
+              {loading ? (
+                <span className="auth-spinner">⏳ Signing in...</span>
+              ) : rateLimitSeconds > 0 ? (
+                `Wait ${rateLimitSeconds}s`
+              ) : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
 

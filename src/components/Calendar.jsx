@@ -20,7 +20,7 @@ function isSameDay(a, b) {
 /**
  * Calendar — Monthly calendar view showing tasks by due date.
  */
-export default function Calendar({ tasks, onEdit }) {
+export default function Calendar({ tasks, onEdit, onNew }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -151,7 +151,14 @@ export default function Calendar({ tasks, onEdit }) {
             <span className="calendar-detail-count">{selectedTasks.length} task{selectedTasks.length !== 1 ? 's' : ''}</span>
           </h3>
           {selectedTasks.length === 0 ? (
-            <p className="calendar-empty">No tasks due this day</p>
+            <div style={{ textAlign: 'center', padding: '12px 0' }}>
+              <p className="calendar-empty">No tasks due this day</p>
+              {onNew && (
+                <button className="btn btn-sm btn-primary" style={{ marginTop: 8 }} onClick={() => onNew()}>
+                  + Add Task for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </button>
+              )}
+            </div>
           ) : (
             <div className="calendar-tasks">
               {selectedTasks.map(task => (

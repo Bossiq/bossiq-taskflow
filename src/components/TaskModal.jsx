@@ -4,6 +4,19 @@ import remarkGfm from 'remark-gfm';
 
 const API = '/api';
 
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 /**
  * TaskModal — Create/edit task form with subtask checklist.
  *
@@ -140,6 +153,31 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
     if (e.key === 'Enter') { e.preventDefault(); addSubtask(); }
   };
 
+  // Extracted comment posting (was duplicated in onKeyDown + onClick)
+  const postComment = async () => {
+    if (!newComment.trim() || !task?.id) return;
+    try {
+      const res = await fetch(`${API}/tasks/${task.id}/comments`, {
+        method: 'POST', headers, credentials: 'include',
+        body: JSON.stringify({ content: newComment.trim() })
+      });
+      if (res.ok) {
+        const c = await res.json();
+        setComments(prev => [...prev, c]);
+        setNewComment('');
+      }
+    } catch { /* network error — silently fail */ }
+  };
+
+  const deleteComment = async (commentId) => {
+    try {
+      await fetch(`${API}/tasks/${task.id}/comments/${commentId}`, {
+        method: 'DELETE', headers, credentials: 'include'
+      });
+      setComments(prev => prev.filter(x => x.id !== commentId));
+    } catch { /* network error */ }
+  };
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div
@@ -163,31 +201,31 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
           </div>
 
           <div className="form-group markdown-editor-group">
+            <label className="section-label">Description</label>
             <div className="markdown-tabs">
               <button
                 type="button"
                 className={`md-tab ${!previewDesc ? 'active' : ''}`}
                 onClick={() => setPreviewDesc(false)}
               >
-                Write
+                ✏️ Write
               </button>
               <button
                 type="button"
                 className={`md-tab ${previewDesc ? 'active' : ''}`}
                 onClick={() => setPreviewDesc(true)}
               >
-                Preview
+                👁 Preview
               </button>
             </div>
             
             {!previewDesc ? (
-              <div className="floating">
+              <div className="desc-editor-wrap">
                 <textarea id="task-desc" className="form-textarea desc-textarea" value={form.description}
-                  onChange={set('description')} placeholder="Supports Markdown (e.g. **bold**, - lists)" maxLength={5000} />
-                <label htmlFor="task-desc">Description (Markdown Supported)</label>
+                  onChange={set('description')} placeholder="Write a description... (Markdown supported)" maxLength={2000} />
                 {form.description.length > 0 && (
-                  <span className={`char-counter ${form.description.length > 4500 ? 'warn' : ''}`}>
-                    {form.description.length}/5000
+                  <span className={`char-counter ${form.description.length > 1800 ? 'warn' : ''}`}>
+                    {form.description.length}/2,000
                   </span>
                 )}
               </div>
@@ -203,6 +241,8 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
               </div>
             )}
           </div>
+
+          <div className="form-divider" />
 
           <div className="form-group">
             <label className="section-label">Priority</label>
@@ -226,41 +266,47 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             </div>
           </div>
 
-          <div className="form-group floating">
-            <input id="task-label" className="form-input" value={form.label} onChange={set('label')}
-              placeholder=" " maxLength={50} />
-            <label htmlFor="task-label">Label (e.g. bug, feature)</label>
-          </div>
+          <div className="form-divider" />
 
-          <div className="form-group floating">
-            <input id="task-due" type="date" className="form-input" value={form.due_date}
-              onChange={set('due_date')} placeholder=" " />
-            <label htmlFor="task-due" className="date-label">Due Date</label>
-            <div className="date-shortcuts">
-              {[
-                { label: 'Today', days: 0 },
-                { label: 'Tomorrow', days: 1 },
-                { label: 'Next Week', days: 7 }
-              ].map(({ label, days }) => {
-                const d = new Date();
-                d.setDate(d.getDate() + days);
-                const val = d.toISOString().split('T')[0];
-                return (
-                  <button key={label} type="button" className="btn btn-sm btn-ghost date-shortcut"
-                    onClick={() => setForm(f => ({ ...f, due_date: val }))}>{label}</button>
-                );
-              })}
-              {form.due_date && (
-                <button type="button" className="btn btn-sm btn-ghost date-shortcut"
-                  onClick={() => setForm(f => ({ ...f, due_date: '' }))}>✕ Clear</button>
-              )}
+          <div className="form-row">
+            <div className="form-group form-group-half">
+              <label htmlFor="task-label" className="section-label">Label</label>
+              <input id="task-label" className="form-input" value={form.label} onChange={set('label')}
+                placeholder="e.g. bug, feature, design" maxLength={50} />
+            </div>
+
+            <div className="form-group form-group-half">
+              <label htmlFor="task-due" className="section-label">Due Date</label>
+              <input id="task-due" type="date" className="form-input" value={form.due_date}
+                onChange={set('due_date')} />
+              <div className="date-shortcuts">
+                {[
+                  { label: 'Today', days: 0 },
+                  { label: 'Tomorrow', days: 1 },
+                  { label: '+1 Week', days: 7 }
+                ].map(({ label, days }) => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + days);
+                  const val = d.toISOString().split('T')[0];
+                  return (
+                    <button key={label} type="button" className="btn btn-sm btn-ghost date-shortcut"
+                      onClick={() => setForm(f => ({ ...f, due_date: val }))}>{label}</button>
+                  );
+                })}
+                {form.due_date && (
+                  <button type="button" className="btn btn-sm btn-ghost date-shortcut date-clear"
+                    onClick={() => setForm(f => ({ ...f, due_date: '' }))}>✕</button>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Subtask checklist — only for existing tasks */}
           {task?.id && (
+            <>
+            <div className="form-divider" />
             <div className="form-group">
-              <label>Subtasks</label>
+              <label className="section-label">📋 Subtasks</label>
               <div className="subtask-list">
                 {subtasks.map(sub => (
                   <div key={sub.id} className="subtask-item">
@@ -298,25 +344,23 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                 </div>
               </div>
             </div>
+            </>
           )}
 
           {/* Comments section — only for existing tasks */}
           {task?.id && (
             <div className="form-group">
-              <label>💬 Comments ({comments.length})</label>
+              <label className="section-label">💬 Comments ({comments.length})</label>
               <div className="comment-thread">
                 {comments.map(c => (
                   <div key={c.id} className="comment-item">
                     <div className="comment-header">
                       <span className="comment-author">{c.username || 'Anonymous'}</span>
-                      <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                      <span className="comment-time">{timeAgo(c.created_at)}</span>
                       <button
                         type="button"
                         className="btn-icon comment-delete"
-                        onClick={async () => {
-                          await fetch(`${API}/tasks/${task.id}/comments/${c.id}`, { method: 'DELETE', headers, credentials: 'include' });
-                          setComments(prev => prev.filter(x => x.id !== c.id));
-                        }}
+                        onClick={() => deleteComment(c.id)}
                         aria-label="Delete comment"
                       >×</button>
                     </div>
@@ -331,18 +375,10 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                     value={newComment}
                     onChange={e => setNewComment(e.target.value)}
                     maxLength={2000}
-                    onKeyDown={async (e) => {
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter' && newComment.trim()) {
                         e.preventDefault();
-                        const res = await fetch(`${API}/tasks/${task.id}/comments`, {
-                          method: 'POST', headers, credentials: 'include',
-                          body: JSON.stringify({ content: newComment.trim() })
-                        });
-                        if (res.ok) {
-                          const c = await res.json();
-                          setComments(prev => [...prev, c]);
-                          setNewComment('');
-                        }
+                        postComment();
                       }
                     }}
                   />
@@ -350,18 +386,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                     type="button"
                     className="btn btn-sm btn-ghost"
                     disabled={!newComment.trim()}
-                    onClick={async () => {
-                      if (!newComment.trim()) return;
-                      const res = await fetch(`${API}/tasks/${task.id}/comments`, {
-                        method: 'POST', headers, credentials: 'include',
-                        body: JSON.stringify({ content: newComment.trim() })
-                      });
-                      if (res.ok) {
-                        const c = await res.json();
-                        setComments(prev => [...prev, c]);
-                        setNewComment('');
-                      }
-                    }}
+                    onClick={postComment}
                   >Post</button>
                 </div>
               </div>
@@ -371,7 +396,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
           {/* Activity Timeline — only for existing tasks */}
           {task?.id && activityLogs.length > 0 && (
             <div className="form-group">
-              <label>📜 Activity History</label>
+              <label className="section-label">📜 Activity History</label>
               <div className="activity-timeline">
                 {activityLogs.map(log => (
                   <div key={log.id} className="activity-item">
@@ -379,7 +404,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                     <div className="activity-content">
                       <span className="activity-action">{log.details || log.action}</span>
                       <span className="activity-meta">
-                        {new Date(log.created_at).toLocaleString()} • {log.user_name || 'System'}
+                        {timeAgo(log.created_at)} • {log.user_name || 'System'}
                       </span>
                     </div>
                   </div>

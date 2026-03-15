@@ -728,6 +728,9 @@ html, body, #root {
   line-height: 1.3;
   flex: 1;
   margin-right: 8px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .task-card-desc {
@@ -740,12 +743,17 @@ html, body, #root {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .task-card-meta {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .task-card-time {
@@ -805,7 +813,10 @@ input[type="date"].form-input {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
+
+/* merged into .task-card-meta above */
 
 .task-card-actions {
   display: flex;
@@ -872,6 +883,8 @@ input[type="date"].form-input {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .modal::before {
@@ -894,23 +907,42 @@ input[type="date"].form-input {
 
 .section-label {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
   margin-bottom: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
 }
 
 .form-input, .form-textarea {
   width: 100%;
   background: var(--bg-glass);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: inherit;
+  font-size: 0.9rem;
   outline: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-input {
+  height: 44px;
+  padding: 0 14px;
+}
+
+.form-textarea {
+  padding: 12px 14px;
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 .form-input:focus, .form-textarea:focus {
@@ -919,16 +951,13 @@ input[type="date"].form-input {
   background: rgba(255,255,255,0.02);
 }
 
-/* Floating label adjustments for Textarea */
-.form-group.floating .form-textarea {
-  min-height: 100px;
-  padding: 24px 16px 12px;
-  font-size: 0.95rem;
-  resize: vertical;
+/* Description editor wrapper */
+.desc-editor-wrap {
+  position: relative;
 }
 
-.form-group.floating .form-textarea ~ label {
-  top: 18px;
+.desc-textarea {
+  min-height: 120px;
 }
 
 /* Priority Selector Segmented Control */
@@ -982,7 +1011,24 @@ input[type="date"].form-input {
 .prio-urgent.active { color: #fb7185; border-color: rgba(251, 113, 133, 0.2); }
 
 /* Fix date label positioning */
-.date-label { position: static !important; display: block; margin-bottom: 8px; transform: none !important; font-size: 0.75rem !important; font-weight: 700 !important; letter-spacing: 0.8px; text-transform: uppercase; }
+.date-label { position: static !important; display: block; margin-bottom: 8px; transform: none !important; font-size: 0.7rem !important; font-weight: 600 !important; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); }
+
+/* Form divider */
+.form-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0 16px;
+}
+
+/* Side-by-side form row */
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+.form-group-half {
+  flex: 1;
+  min-width: 0;
+}
 
 .modal-actions {
   display: flex;
@@ -1168,7 +1214,8 @@ input[type="date"].form-input {
 }
 
 .form-input-sm {
-  padding: 7px 10px;
+  height: 36px;
+  padding: 0 10px;
   font-size: 0.82rem;
 }
 
@@ -1651,22 +1698,154 @@ kbd {
 .char-counter {
   display: block;
   text-align: right;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
+  font-weight: 500;
   color: var(--text-muted);
-  margin-top: 2px;
-  transition: color 0.2s;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  transition: color 0.2s, opacity 0.2s;
 }
-.char-counter.warn { color: #fbbf24; }
+.char-counter.warn { color: #fbbf24; opacity: 1; font-weight: 600; }
 
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== AUTH SHAKE ANIMATION ===== */
+@keyframes authShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 50%, 90% { transform: translateX(-6px); }
+  30%, 70% { transform: translateX(6px); }
+}
+.auth-shake { animation: authShake 0.45s ease-in-out; }
+
+/* Auth spinner */
+.auth-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Rate limit timer */
+.auth-rate-limit-timer {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Auth entrance animation is on .auth-split-layout below */
+
+
+/* ===== TASK QUICK ACTIONS ===== */
+.task-card-quick-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.task-card:hover .task-card-quick-actions {
+  opacity: 1;
+  max-height: 40px;
+}
+/* Always show quick-actions on touch/mobile devices */
+@media (max-width: 768px) {
+  .task-card-quick-actions {
+    opacity: 1;
+    max-height: 40px;
+  }
+}
+.quick-action-btn {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-glass);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.quick-action-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.quick-action-btn.qa-done:hover {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+/* ===== KEYBOARD SHORTCUT OVERLAY ===== */
+.shortcut-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 8, 20, 0.8);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  animation: fadeIn 0.2s ease-out;
+}
+.shortcut-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.shortcut-modal h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+.shortcut-modal-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 16px;
+  align-items: center;
+}
+.shortcut-modal-grid kbd {
+  min-width: 32px;
+}
+.shortcut-modal-grid span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.shortcut-modal-close {
+  margin-top: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* ===== SCROLL LOCK ===== */
+body.modal-open {
+  overflow: hidden;
 }
 /* ===== AUTH SPLIT LAYOUT (PHASE 18) ===== */
 .auth-split-layout {
   min-height: 100vh;
   display: flex;
   background: var(--bg-primary);
+  animation: authFadeIn 0.6s ease-out;
+}
+@keyframes authFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .auth-branding {
@@ -1847,9 +2026,9 @@ kbd {
 }
 
 .form-group.floating .form-input {
-  height: 56px;
-  padding: 24px 16px 8px;
-  font-size: 1rem;
+  height: 52px;
+  padding: 22px 16px 8px;
+  font-size: 0.95rem;
   background: var(--bg-glass);
 }
 
@@ -1944,14 +2123,23 @@ kbd {
 /* Date shortcuts */
 .date-shortcuts {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   margin-top: 6px;
   flex-wrap: wrap;
 }
 .date-shortcut {
-  font-size: 0.7rem !important;
-  padding: 3px 8px !important;
-  border-radius: 6px !important;
+  font-size: 0.65rem !important;
+  padding: 2px 8px !important;
+  border-radius: 20px !important;
+  font-weight: 500 !important;
+  opacity: 0.8;
+}
+.date-shortcut:hover {
+  opacity: 1;
+}
+.date-clear {
+  color: var(--danger) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
 }
 
 /* ===== USER INFO ===== */
@@ -2565,4 +2753,13 @@ kbd {
   .auth-branding { min-height: 150px; }
   .auth-branding-title { font-size: 1.6rem; }
   .overdue-banner { flex-direction: column; text-align: center; }
+  .form-row { flex-direction: column; gap: 0; }
+}
+
+/* ===== DISABLED BUTTON STATE ===== */
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }

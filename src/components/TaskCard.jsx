@@ -47,7 +47,7 @@ function formatDueDate(dueDate) {
 /**
  * TaskCard — Displays an individual task with drag-and-drop and batch selection support.
  */
-const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, batchMode, selected, onToggleSelect, style }) {
+const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, onMove, batchMode, selected, onToggleSelect, style }) {
   const overdue = task.status !== 'done' && isOverdue(task.due_date);
 
   const handleClick = () => {
@@ -55,6 +55,13 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, b
       onToggleSelect?.(task.id);
     }
   };
+
+  // Quick action status options (exclude current status)
+  const quickActions = [
+    { status: 'todo', label: '📋 To Do' },
+    { status: 'inprogress', label: '🔄 In Progress' },
+    { status: 'done', label: '✅ Done' }
+  ].filter(a => a.status !== task.status);
 
   return (
     <Draggable draggableId={String(task.id)} index={index} isDragDisabled={batchMode}>
@@ -124,6 +131,22 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, b
           </div>
         )}
       </div>
+
+      {/* Quick status change actions */}
+      {!batchMode && onMove && (
+        <div className="task-card-quick-actions">
+          {quickActions.map(a => (
+            <button
+              key={a.status}
+              className={`quick-action-btn ${a.status === 'done' ? 'qa-done' : ''}`}
+              onClick={(e) => { e.stopPropagation(); onMove(task.id, a.status); }}
+              title={`Move to ${a.label}`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
       )}
     </Draggable>

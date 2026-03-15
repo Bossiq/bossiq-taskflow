@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense, lazy } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import TaskModal from './components/TaskModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
@@ -38,6 +38,7 @@ export default function App() {
   const [token, setToken] = useState(null);
   const [coldStartMsg, setColdStartMsg] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const isMobile = () => window.innerWidth <= 768;
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const toastIdRef = useRef(0);
@@ -50,6 +51,16 @@ export default function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [sidebarOpen]);
+
+  // Scroll lock when modal or dialog is open
+  useEffect(() => {
+    if (showModal || confirmDialog || showShortcuts) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => document.body.classList.remove('modal-open');
+  }, [showModal, confirmDialog, showShortcuts]);
 
   // ── Auth helpers ──
   const getHeaders = useCallback(() => {
@@ -336,6 +347,19 @@ export default function App() {
     const handler = (e) => {
       if (showModal || confirmDialog) return;
 
+      // ? for keyboard shortcuts overlay
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setShowShortcuts(s => !s);
+        return;
+      }
+
+      // Escape to close shortcuts overlay
+      if (e.key === 'Escape' && showShortcuts) {
+        setShowShortcuts(false);
+        return;
+      }
+
       // Cmd+K or Ctrl+K for search
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -360,7 +384,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [showModal, confirmDialog]);
+  }, [showModal, confirmDialog, showShortcuts]);
 
   // ── Cold-start notification (shows after 3s of loading) ──
   useEffect(() => {
@@ -370,6 +394,14 @@ export default function App() {
     }
     setColdStartMsg(false);
   }, [loading]);
+
+  // Compute overdue tasks for Dashboard (avoids redundant fetch)
+  // Must be above conditional returns to satisfy Rules of Hooks
+  const overdueTasks = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return tasks.filter(t => t.due_date && t.status !== 'done' && new Date(t.due_date) < today);
+  }, [tasks]);
 
   // ── Auth gate ──
   if (!authChecked) return null;
@@ -434,6 +466,8 @@ export default function App() {
       : 'All Tasks';
   const taskCount = tasks.length;
 
+
+
   return (
     <div className={`app ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <Sidebar
@@ -493,11 +527,11 @@ export default function App() {
           </Suspense>
         ) : view === 'calendar' ? (
           <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Calendar...</p></div>}>
-            <Calendar tasks={tasks} onEdit={openEdit} />
+            <Calendar tasks={tasks} onEdit={openEdit} onNew={openNew} />
           </Suspense>
         ) : (
           <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Dashboard...</p></div>}>
-            <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} />
+            <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} overdueTasks={overdueTasks} />
           </Suspense>
         )}
       </main>
@@ -520,6 +554,24 @@ export default function App() {
           <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
         ))}
       </div>
+
+      {/* Keyboard shortcut overlay */}
+      {showShortcuts && (
+        <div className="shortcut-overlay" onClick={(e) => e.target === e.currentTarget && setShowShortcuts(false)}>
+          <div className="shortcut-modal">
+            <h2>⌨️ Keyboard Shortcuts</h2>
+            <div className="shortcut-modal-grid">
+              <kbd>N</kbd> <span>Create new task</span>
+              <kbd>/</kbd> <span>Focus search bar</span>
+              <kbd>⌘K</kbd> <span>Quick search</span>
+              <kbd>D</kbd> <span>Toggle dashboard</span>
+              <kbd>?</kbd> <span>Show this overlay</span>
+              <kbd>Esc</kbd> <span>Close modal / overlay</span>
+            </div>
+            <div className="shortcut-modal-close">Press <kbd>Esc</kbd> or <kbd>?</kbd> to close</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

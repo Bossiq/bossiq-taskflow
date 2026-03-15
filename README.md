@@ -1,6 +1,6 @@
 # ⚡ TaskFlow — Full-Stack Kanban Task Tracker
 
-A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, real-time statistics dashboard, subtask checklists, and comprehensive security hardening.
+A production-grade, enterprise-ready Kanban task management application built with **React 18**, **Express**, and **SQLite**. Featuring a dark-mode glassmorphism UI, drag-and-drop board, real-time statistics dashboard, markdown-powered descriptions, subtask checklists, and comprehensive security hardening.
 
 🔗 **[Live Demo → bossiq-taskflow.vercel.app](https://bossiq-taskflow.vercel.app)**
 
@@ -30,8 +30,10 @@ A production-grade, enterprise-ready Kanban task management application built wi
 - **Search** — Debounced full-text search across all tasks
 - **CSV Export** — Export all tasks to downloadable CSV file
 - **Calendar View** — Monthly grid with priority dots, date selection, overdue indicators
-- **Task Comments** — Threaded comment system with author display and timestamps
-- **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle dashboard, `Esc` close modal
+- **Task Comments** — Threaded comment system with author display and relative timestamps
+- **Keyboard Shortcuts** — `N` new task, `/` focus search, `D` toggle dashboard, `?` shortcut overlay, `Esc` close modal
+- **Quick Status Actions** — Hover-visible buttons for instant status changes on task cards
+- **Markdown Editor** — Write/Preview tabs with live markdown rendering in descriptions
 
 ### Production Quality
 - **🛡️ Zero-Trust Architecture** — Helmet.js headers, strict CORS, express-rate-limit, and HTML sanitization
@@ -45,7 +47,7 @@ A production-grade, enterprise-ready Kanban task management application built wi
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18, Vite 5 |
+| Frontend | React 18, Vite 8 |
 | Styling | Vanilla CSS (dark/light mode, glassmorphism) |
 | Backend | Node.js, Express 4 |
 | Database | SQLite via better-sqlite3 (WAL mode) |
@@ -87,7 +89,7 @@ taskflow/
 ├── src/
 │   ├── main.jsx                # React entry (wrapped in ErrorBoundary)
 │   ├── App.jsx                 # Main app shell + state management
-│   ├── index.css               # Design system (1600+ lines)
+│   ├── index.css               # Design system (2700+ lines)
 │   └── components/
 │       ├── Board.jsx           # Kanban board (ARIA regions, drag-and-drop)
 │       ├── TaskCard.jsx        # Task card (progress bar, timeAgo, drag)
@@ -115,7 +117,7 @@ taskflow/
     │   ├── comments.js         # Comment CRUD API (add, list, delete)
     │   └── activity.js         # Activity feed + streak API
     └── __tests__/
-        └── api.test.js         # 46 backend API tests (Supertest)
+        └── api.test.js         # 47 backend API tests + 40 stress tests (Supertest)
 ```
 
 ## 🔒 Security Features
@@ -187,7 +189,7 @@ taskflow/
 | `npm run dev:server` | Start Express API with nodemon (hot reload) |
 | `npm start` | Start Express API for production |
 | `npm run build` | Build frontend for production |
-| `npm test` | Run all 65 tests |
+| `npm test` | Run all 106 tests |
 | `npm run test:watch` | Run tests in watch mode |
 
 ## ⚙️ Environment Variables
@@ -203,7 +205,7 @@ See [`.env.example`](.env.example) for all available variables.
 
 ## 🧪 Testing
 
-65 tests across 4 suites covering frontend components and backend API:
+106 tests across 5 suites covering frontend components, backend API, and stress tests:
 
 ```bash
 npm test              # Run all tests
@@ -212,7 +214,8 @@ npm run test:watch    # Watch mode
 
 | Suite | Tests | Coverage |
 |---|---|---|
-| Backend API | 46 | Health, 404, task CRUD, project CRUD, subtask CRUD, auth, comments, reorder |
+| Backend API | 47 | Health, 404, task CRUD, project CRUD, subtask CRUD, auth, comments, reorder |
+| Stress Tests | 40 | Concurrent operations, rate limiting, payload limits, edge cases |
 | Board | 6 | Columns, sorting, empty states, ARIA |
 | TaskCard | 8 | Render, overdue, draggable, description |
 | Toast | 5 | Render, icons, auto-dismiss |

@@ -153,7 +153,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
         headers: getHeaders?.() || { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ position: destination.index })
-      }).then(() => onBatchAction?.()).catch(() => {});
+      }).then(() => onBatchAction?.()).catch(() => addToast?.('Failed to reorder task', 'error'));
     }
   }, [onMove, getHeaders, onBatchAction]);
 
@@ -254,7 +254,11 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
             <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'todo')}>→ To Do</button>
             <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'inprogress')}>→ In Progress</button>
             <button className="btn btn-sm btn-ghost" onClick={() => handleBatch('move', 'done')}>→ Done</button>
-            <button className="btn btn-sm" style={{ color: '#fb7185' }} onClick={() => handleBatch('delete')}>🗑 Delete All</button>
+            <button className="btn btn-sm" style={{ color: '#fb7185' }} onClick={() => {
+              if (window.confirm(`Delete ${selectedIds.size} task${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) {
+                handleBatch('delete');
+              }
+            }}>🗑 Delete All</button>
           </div>
           <button className="btn btn-sm btn-ghost" onClick={clearSelection}>Cancel</button>
         </div>
@@ -286,6 +290,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
                     index={idx}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onMove={onMove}
                     batchMode={batchMode}
                     selected={selectedIds.has(task.id)}
                     onToggleSelect={toggleSelect}
