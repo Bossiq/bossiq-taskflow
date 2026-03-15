@@ -1059,6 +1059,35 @@ input[type="date"].form-input {
   margin-bottom: 32px;
 }
 
+/* ===== OVERVIEW HEADER ===== */
+.overview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.overview-greeting { flex: 1; min-width: 200px; }
+.overview-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+.overview-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+.overview-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ===== STAT CARDS ===== */
 .stat-card {
   background: var(--bg-card);
   backdrop-filter: blur(12px);
@@ -1066,8 +1095,67 @@ input[type="date"].form-input {
   border-radius: var(--radius-md);
   padding: 20px;
   transition: all var(--transition);
+  position: relative;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  width: 100%;
 }
 .stat-card:hover { border-color: var(--border-glow); transform: translateY(-2px); }
+
+/* Interactive stat cards */
+.stat-card-interactive {
+  cursor: pointer;
+}
+.stat-card-interactive .stat-arrow {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 1rem;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.2s ease;
+}
+.stat-card-interactive:hover .stat-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+.stat-card-interactive:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+.stat-card-interactive:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ===== OVERVIEW EMPTY STATE ===== */
+.overview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+}
+.overview-empty-icon { font-size: 3rem; }
+.overview-empty h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.overview-empty p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  max-width: 300px;
+}
 
 .stat-value {
   font-size: 2rem;

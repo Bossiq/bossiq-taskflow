@@ -38,9 +38,9 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
           <span className="nav-icon">📋</span>
           {isOpen && <span className="nav-text">All Tasks</span>}
         </button>
-        <button className={`nav-item ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Dashboard">
-          <span className="nav-icon">📊</span>
-          {isOpen && <span className="nav-text">Dashboard</span>}
+        <button className={`nav-item ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Overview">
+          <span className="nav-icon">📈</span>
+          {isOpen && <span className="nav-text">Overview</span>}
         </button>
         <button className={`nav-item ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')} title="Calendar">
           <span className="nav-icon">📅</span>
@@ -147,7 +147,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
         </button>
         {isOpen && (
           <div className="sidebar-shortcut">
-            <kbd>N</kbd> new · <kbd>/</kbd> search · <kbd>D</kbd> dashboard
+            <kbd>N</kbd> new · <kbd>/</kbd> search · <kbd>D</kbd> overview
           </div>
         )}
       </div>

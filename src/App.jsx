@@ -460,7 +460,7 @@ export default function App() {
 
   const currentProjectObj = projects.find(p => p.id === currentProject);
   const pageTitle = view === 'dashboard'
-    ? '📊 Dashboard'
+    ? '📈 Overview'
     : currentProject
       ? (currentProjectObj?.name || 'Tasks')
       : 'All Tasks';
@@ -530,8 +530,8 @@ export default function App() {
             <Calendar tasks={tasks} onEdit={openEdit} onNew={openNew} />
           </Suspense>
         ) : (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Dashboard...</p></div>}>
-            <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} overdueTasks={overdueTasks} />
+          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span>⏳</span><p>Loading Overview...</p></div>}>
+            <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} overdueTasks={overdueTasks} onNavigate={(v) => setView(v)} onNewTask={openNew} onExportCSV={handleExportCSV} user={user} />
           </Suspense>
         )}
       </main>
@@ -564,7 +564,7 @@ export default function App() {
               <kbd>N</kbd> <span>Create new task</span>
               <kbd>/</kbd> <span>Focus search bar</span>
               <kbd>⌘K</kbd> <span>Quick search</span>
-              <kbd>D</kbd> <span>Toggle dashboard</span>
+              <kbd>D</kbd> <span>Toggle overview</span>
               <kbd>?</kbd> <span>Show this overlay</span>
               <kbd>Esc</kbd> <span>Close modal / overlay</span>
             </div>
