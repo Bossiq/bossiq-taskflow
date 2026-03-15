@@ -10,6 +10,14 @@ function logActivity(taskId, action, details = '', userId = null) {
   } catch { /* non-critical */ }
 }
 
+/** Helper: broadcast task change via Socket.IO */
+function broadcast(req, action, data) {
+  try {
+    const io = req.app.get('io');
+    if (io) io.emit('task:change', { action, data, timestamp: Date.now() });
+  } catch { /* non-critical */ }
+}
+
 // --- Validation helpers ---
 const VALID_STATUSES = ['todo', 'inprogress', 'done'];
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
@@ -184,6 +192,7 @@ router.post('/', (req, res) => {
 
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
     logActivity(task.id, 'created', `Created task "${task.title}"`, userId);
+    broadcast(req, 'created', task);
     res.status(201).json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -223,6 +232,7 @@ router.put('/:id', (req, res) => {
 
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     logActivity(task.id, 'updated', `Updated task "${task.title}"`);
+    broadcast(req, 'updated', task);
     res.json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -252,6 +262,7 @@ router.patch('/:id/move', (req, res) => {
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     const action = task.status === 'done' && existing.status !== 'done' ? 'completed' : 'moved';
     logActivity(task.id, action, `${action === 'completed' ? 'Completed' : 'Moved'} task "${task.title}" to ${status}`);
+    broadcast(req, 'moved', task);
     res.json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -375,6 +386,7 @@ router.delete('/:id', (req, res) => {
     if (!task) return res.status(404).json({ error: 'Task not found' });
     logActivity(req.params.id, 'deleted', `Deleted task "${task.title}"`);
     db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
+    broadcast(req, 'deleted', { id: Number(req.params.id) });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

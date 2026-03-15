@@ -5,6 +5,7 @@ import ConfirmDialog from './components/ConfirmDialog.jsx';
 import Toast from './components/Toast.jsx';
 import AuthPage from './components/AuthPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
+import useSocket from './hooks/useSocket.js';
 
 // Lazy loaded heavy components for code splitting
 const Board = lazy(() => import('./components/Board.jsx'));
@@ -208,6 +209,9 @@ export default function App() {
     fetchProjects();
     setRefreshKey(k => k + 1);
   };
+
+  // ── WebSocket real-time sync ──
+  useSocket(() => triggerRefresh());
 
   // ── Process recurring tasks helper ──
   const processRecurring = async () => {

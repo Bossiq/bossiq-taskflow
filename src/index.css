@@ -2513,25 +2513,38 @@ body.modal-open {
 .notif-bell-wrapper { position: relative; }
 .notif-bell-btn {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
   color: var(--text-secondary);
-  transition: background 0.15s, color 0.15s;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
-.notif-bell-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
-.notif-bell-icon { line-height: 1; }
+.notif-bell-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+.notif-bell-svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s ease;
+}
+.notif-bell-btn:hover .notif-bell-svg {
+  transform: rotate(15deg);
+}
 .notif-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: 4px;
+  right: 4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
   border-radius: 999px;
   background: #ef4444;
   color: #fff;
@@ -2542,6 +2555,8 @@ body.modal-open {
   justify-content: center;
   line-height: 1;
   pointer-events: none;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.4);
 }
 
 .notif-panel {
