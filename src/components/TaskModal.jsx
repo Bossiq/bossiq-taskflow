@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+
 
 const API = '/api';
 
@@ -33,7 +32,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [activityLogs, setActivityLogs] = useState([]);
-  const [previewDesc, setPreviewDesc] = useState(false);
+
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
   const headers = getHeaders?.() || { 'Content-Type': 'application/json' };
@@ -200,46 +199,17 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             )}
           </div>
 
-          <div className="form-group markdown-editor-group">
+          <div className="form-group">
             <label className="section-label">Description</label>
-            <div className="markdown-tabs">
-              <button
-                type="button"
-                className={`md-tab ${!previewDesc ? 'active' : ''}`}
-                onClick={() => setPreviewDesc(false)}
-              >
-                ✏️ Write
-              </button>
-              <button
-                type="button"
-                className={`md-tab ${previewDesc ? 'active' : ''}`}
-                onClick={() => setPreviewDesc(true)}
-              >
-                👁 Preview
-              </button>
+            <div className="desc-editor-wrap">
+              <textarea id="task-desc" className="form-textarea desc-textarea" value={form.description}
+                onChange={set('description')} placeholder="Add details about this task..." maxLength={2000} />
+              {form.description.length > 0 && (
+                <span className={`char-counter ${form.description.length > 1800 ? 'warn' : ''}`}>
+                  {form.description.length}/2,000
+                </span>
+              )}
             </div>
-            
-            {!previewDesc ? (
-              <div className="desc-editor-wrap">
-                <textarea id="task-desc" className="form-textarea desc-textarea" value={form.description}
-                  onChange={set('description')} placeholder="Write a description... (Markdown supported)" maxLength={2000} />
-                {form.description.length > 0 && (
-                  <span className={`char-counter ${form.description.length > 1800 ? 'warn' : ''}`}>
-                    {form.description.length}/2,000
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div className="markdown-body preview-box">
-                {form.description.trim() ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {form.description}
-                  </ReactMarkdown>
-                ) : (
-                  <span className="empty-preview">Nothing to preview.</span>
-                )}
-              </div>
-            )}
           </div>
 
           <div className="form-divider" />
