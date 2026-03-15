@@ -214,24 +214,23 @@ export default function AuthPage({ onAuth }) {
             )}
 
             <div className="form-group floating">
-              <div className="password-wrapper">
-                <input
-                  id="auth-password"
-                  type={showPw ? 'text' : 'password'}
-                  className="form-input"
-                  value={form.password}
-                  onChange={set('password')}
-                  placeholder=" "
-                  required
-                  minLength={mode === 'register' ? 6 : undefined}
-                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                  disabled={loading}
-                />
-                <label htmlFor="auth-password">Password</label>
-                <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+              <input
+                id="auth-password"
+                type={showPw ? 'text' : 'password'}
+                className="form-input"
+                value={form.password}
+                onChange={set('password')}
+                placeholder=" "
+                required
+                minLength={mode === 'register' ? 6 : undefined}
+                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                disabled={loading}
+                style={{ paddingRight: 48 }}
+              />
+              <label htmlFor="auth-password">Password</label>
+              <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
 
             {error && (

@@ -544,23 +544,25 @@ export default function App() {
             <Menu size={20} />
           </button>
           <h1>{pageTitle} {view === 'board' && <span className="header-count">{taskCount}</span>}</h1>
-          <div className="search-box">
-            <span aria-hidden="true" className="search-icon"><Search size={16} /></span>
-            <input
-              id="search-input"
-              placeholder="Search tasks..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Search tasks"
-            />
-            {search ? (
-              <button className="btn-icon" onClick={() => setSearch('')} aria-label="Clear search" style={{ width: 24, height: 24 }}><X size={14} /></button>
-            ) : (
-              <kbd className="search-shortcut">⌘K</kbd>
-            )}
+          <div className="top-bar-actions">
+            <div className="search-box">
+              <span aria-hidden="true" className="search-icon"><Search size={16} /></span>
+              <input
+                id="search-input"
+                placeholder="Search tasks..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search tasks"
+              />
+              {search ? (
+                <button className="btn-icon" onClick={() => setSearch('')} aria-label="Clear search" style={{ width: 24, height: 24 }}><X size={14} /></button>
+              ) : (
+                <kbd className="search-shortcut">⌘K</kbd>
+              )}
+            </div>
+            <NotificationBell tasks={tasks} getHeaders={getHeaders} />
+            <button id="new-task-btn" className="btn btn-primary" onClick={openNew}><Plus size={16} style={{display:'inline',verticalAlign:'middle',marginRight:4}} />New Task</button>
           </div>
-          <NotificationBell tasks={tasks} getHeaders={getHeaders} />
-          <button id="new-task-btn" className="btn btn-primary" onClick={openNew}><Plus size={16} style={{display:'inline',verticalAlign:'middle',marginRight:4}} />New Task</button>
         </div>
 
         {view === 'board' ? (
