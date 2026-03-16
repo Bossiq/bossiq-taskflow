@@ -195,11 +195,10 @@ export default function App() {
     }
   }, [apiError, retryCount]);
 
-  // Dynamic document title
+  // Keep document title clean — no notification-style count prefix
   useEffect(() => {
-    const count = tasks.length;
-    document.title = count > 0 ? `(${count}) TaskFlow` : 'TaskFlow — Task Tracker';
-  }, [tasks.length]);
+    document.title = 'TaskFlow — Task Tracker';
+  }, []);
 
   // Re-fetch on dependency changes (not initial)
   useEffect(() => {
