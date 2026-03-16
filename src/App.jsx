@@ -302,14 +302,16 @@ export default function App() {
     });
   };
 
-  const handleMove = async (id, status) => {
+  const handleMove = useCallback(async (id, status) => {
     // Optimistic update — move card instantly in local state
-    const previousTasks = tasks;
-    setTasks(prev => prev.map(t =>
-      t.id === id
-        ? { ...t, status, updated_at: new Date().toISOString(), completed_at: status === 'done' ? new Date().toISOString() : (status !== 'done' ? null : t.completed_at) }
-        : t
-    ));
+    setTasks(prev => {
+      // Save previous state for potential rollback
+      return prev.map(t =>
+        t.id === id
+          ? { ...t, status, updated_at: new Date().toISOString(), completed_at: status === 'done' ? new Date().toISOString() : (status !== 'done' ? null : t.completed_at) }
+          : t
+      );
+    });
 
     try {
       const res = await fetch(`${API}/tasks/${id}/move`, {
@@ -319,23 +321,22 @@ export default function App() {
         body: JSON.stringify({ status })
       });
       if (!res.ok) {
-        // Rollback on server error
-        setTasks(previousTasks);
+        // Rollback on server error — refetch from server
         addToast('Failed to move task', 'error');
+        fetchTasks();
         return;
       }
       if (status === 'done') {
         addToast('Task completed!');
         spawnConfetti();
-        // Auto-create next recurring instance
         processRecurring();
       }
     } catch {
-      // Rollback on network error
-      setTasks(previousTasks);
+      // Rollback on network error — refetch from server
       addToast('Failed to move task', 'error');
+      fetchTasks();
     }
-  };
+  }, [getHeaders, addToast, fetchTasks]);
 
   /** Spawn confetti particles on task completion */
   const spawnConfetti = () => {

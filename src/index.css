@@ -700,7 +700,7 @@ html, body, #root {
   border-radius: var(--radius-md);
   padding: 14px 16px;
   cursor: grab;
-  /* Transition visual props only — NOT transform, which fights dnd's real-time positioning */
+  /* Transition visual props only — NEVER transform (fights dnd positioning) */
   transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
   position: relative;
   /* Premium staggered entrance animation */
@@ -708,19 +708,22 @@ html, body, #root {
   animation: cardSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* During active board drag: disable expensive GPU effects on ALL cards */
+/*
+ * During board drag: disable GPU-heavy effects on sibling cards.
+ * CRITICAL: Do NOT use !important on transition — the DnD library
+ * manages transitions via inline styles and !important overrides them,
+ * breaking snap-back animations and drop detection.
+ */
 .board-dragging .task-card {
   backdrop-filter: none;
-  animation: none !important;
-  opacity: 1 !important;
-  /* Kill all transitions so dnd positioning is instant */
-  transition: none !important;
+  animation: none;
+  opacity: 1;
 }
 
-/* Dragging state — the card being actively dragged (portal clone) */
+/* The card being actively dragged — portal clone created by @hello-pangea/dnd */
 .task-card.dragging {
-  animation: none !important;
-  opacity: 1 !important;
+  animation: none;
+  opacity: 1;
   box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 2px var(--accent);
   cursor: grabbing;
   z-index: 9999;
@@ -731,15 +734,18 @@ html, body, #root {
 .task-card[data-priority="medium"] { border-left-color: var(--accent); }
 .task-card[data-priority="low"] { border-left-color: var(--text-muted); }
 
+/* Hover effects — disabled during drag to prevent transform interference */
 .task-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-glow);
   border-left-color: var(--accent-hover);
   box-shadow: var(--shadow-md);
+}
+.task-card:not(.dragging):hover {
   transform: translateY(-2px);
 }
-/* During drag, suppress hover transforms on sibling cards */
-.board-dragging .task-card:not(.dragging):hover {
+/* During drag, suppress ALL hover transforms on every card */
+.board-dragging .task-card:hover {
   transform: none;
 }
 .task-card:active:not(.dragging) {
