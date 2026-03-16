@@ -131,10 +131,10 @@ export default function App() {
       .finally(() => setAuthChecked(true));
   }, []);
 
-  const handleAuth = (u) => {
+  const handleAuth = useCallback((u) => {
     setUser(u);
     setAuthResolved(true);
-  };
+  }, []);
 
   const handleLogout = async () => {
     try {

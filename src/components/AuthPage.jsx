@@ -185,12 +185,14 @@ export default function AuthPage({ onAuth }) {
 
           <div className="auth-tabs">
             <button
+              type="button"
               className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
               onClick={() => handleTabSwitch('login')}
             >
               Sign In
             </button>
             <button
+              type="button"
               className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
               onClick={() => handleTabSwitch('register')}
             >
