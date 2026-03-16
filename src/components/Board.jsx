@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { X, ListChecks, Check, ArrowRight } from 'lucide-react';
 import TaskCard from './TaskCard.jsx';
@@ -57,6 +57,28 @@ function sortTasks(tasks, sortBy) {
 }
 
 /**
+ * ColumnInnerList — Memoized list of TaskCards inside a Droppable.
+ * Per the @hello-pangea/dnd performance guide, this prevents all cards
+ * from re-rendering when drag state (isDraggingOver, placeholder) changes
+ * on the parent Droppable. Only the dragged card re-renders.
+ */
+const ColumnInnerList = React.memo(function ColumnInnerList({ tasks, onEdit, onDelete, onMove, batchMode, selectedIds, onToggleSelect }) {
+  return tasks.map((task, idx) => (
+    <TaskCard
+      key={task.id}
+      task={task}
+      index={idx}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onMove={onMove}
+      batchMode={batchMode}
+      selected={selectedIds.has(task.id)}
+      onToggleSelect={onToggleSelect}
+    />
+  ));
+});
+
+/**
  * Board — Kanban board with drag-and-drop, filtering, sorting, and batch actions.
  */
 export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, addToast, getHeaders }) {
@@ -68,6 +90,8 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
   const [labelFilter, setLabelFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [batchMode, setBatchMode] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const boardRef = useRef(null);
 
   const handleSortChange = (e) => {
     const val = e.target.value;
@@ -130,7 +154,12 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
 
   const activeFilterCount = priorityFilters.length + (labelFilter ? 1 : 0);
 
+  const onDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
   const onDragEnd = useCallback((result) => {
+    setIsDragging(false);
     const { source, destination, draggableId } = result;
     
     // Dropped outside a valid droppable area
@@ -143,20 +172,20 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
 
     const taskId = parseInt(draggableId, 10);
     
-    // Changing columns
+    // Changing columns — delegate to parent's optimistic handler
     if (source.droppableId !== destination.droppableId) {
       onMove?.(taskId, destination.droppableId);
     } 
-    // Same column - reordering
+    // Same column - reordering (fire-and-forget, no full refresh needed)
     else {
       fetch(`/api/tasks/${taskId}/reorder`, {
         method: 'PATCH',
         headers: getHeaders?.() || { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ position: destination.index })
-      }).then(() => onBatchAction?.()).catch(() => addToast?.('Failed to reorder task', 'error'));
+      }).catch(() => addToast?.('Failed to reorder task', 'error'));
     }
-  }, [onMove, getHeaders, onBatchAction]);
+  }, [onMove, getHeaders, addToast]);
 
   // Apply filters then sort
   const filteredAndSorted = useMemo(() => {
@@ -193,8 +222,8 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
   }
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="board" role="group" aria-label="Kanban Board">
+    <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+      <div className={`board ${isDragging ? 'board-dragging' : ''}`} ref={boardRef} role="group" aria-label="Kanban Board">
         <div className="board-toolbar">
           {/* Sort */}
           <div className="toolbar-group">
@@ -284,24 +313,20 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                   >
-                {colTasks.map((task, idx) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    index={idx}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onMove={onMove}
-                    batchMode={batchMode}
-                    selected={selectedIds.has(task.id)}
-                    onToggleSelect={toggleSelect}
-                  />
-                ))}
-                {provided.placeholder}
-                {colTasks.length === 0 && (
-                  <p className="column-empty">Drop tasks here</p>
-                )}
-              </div>
+                    <ColumnInnerList
+                      tasks={colTasks}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onMove={onMove}
+                      batchMode={batchMode}
+                      selectedIds={selectedIds}
+                      onToggleSelect={toggleSelect}
+                    />
+                    {provided.placeholder}
+                    {colTasks.length === 0 && (
+                      <p className="column-empty">Drop tasks here</p>
+                    )}
+                  </div>
                 )}
               </Droppable>
             </div>

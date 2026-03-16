@@ -87,28 +87,20 @@ export default function App() {
   // Check saved auth on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('taskflow-user');
-    const skippedAuth = localStorage.getItem('taskflow-skipped');
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
         setAuthResolved(true);
       } catch { /* ignore */ }
-    } else if (skippedAuth) {
-      setAuthResolved(true);
     }
+    // Clear legacy skip flag — guests now always get a real session
+    localStorage.removeItem('taskflow-skipped');
     setAuthChecked(true);
   }, []);
 
   const handleAuth = (u) => {
     setUser(u);
     setAuthResolved(true);
-    if (!u) {
-      // "Continue without account" — remember the choice
-      localStorage.setItem('taskflow-skipped', '1');
-    } else {
-      // Real login — clear skip flag
-      localStorage.removeItem('taskflow-skipped');
-    }
   };
 
   const handleLogout = async () => {
@@ -205,11 +197,16 @@ export default function App() {
     if (!loading) fetchTasks();
   }, [fetchTasks]);
 
-  const triggerRefresh = () => {
+  const triggerRefresh = useCallback(() => {
+    fetchTasks();
+    setRefreshKey(k => k + 1);
+  }, [fetchTasks]);
+
+  const triggerFullRefresh = useCallback(() => {
     fetchTasks();
     fetchProjects();
     setRefreshKey(k => k + 1);
-  };
+  }, [fetchTasks, fetchProjects]);
 
   // ── WebSocket real-time sync ──
   useSocket(() => triggerRefresh());
@@ -268,21 +265,36 @@ export default function App() {
   };
 
   const handleMove = async (id, status) => {
+    // Optimistic update — move card instantly in local state
+    const previousTasks = tasks;
+    setTasks(prev => prev.map(t =>
+      t.id === id
+        ? { ...t, status, updated_at: new Date().toISOString(), completed_at: status === 'done' ? new Date().toISOString() : (status !== 'done' ? null : t.completed_at) }
+        : t
+    ));
+
     try {
-      await fetch(`${API}/tasks/${id}/move`, {
+      const res = await fetch(`${API}/tasks/${id}/move`, {
         method: 'PATCH',
         headers: getHeaders(),
         credentials: 'include',
         body: JSON.stringify({ status })
       });
+      if (!res.ok) {
+        // Rollback on server error
+        setTasks(previousTasks);
+        addToast('Failed to move task', 'error');
+        return;
+      }
       if (status === 'done') {
         addToast('Task completed!');
         spawnConfetti();
         // Auto-create next recurring instance
         processRecurring();
       }
-      triggerRefresh();
     } catch {
+      // Rollback on network error
+      setTasks(previousTasks);
       addToast('Failed to move task', 'error');
     }
   };
@@ -323,7 +335,7 @@ export default function App() {
         return;
       }
       const project = await res.json();
-      fetchProjects();
+      triggerFullRefresh();
       setCurrentProject(project.id);
       addToast(`Project "${name}" created`);
     } catch {
@@ -346,7 +358,7 @@ export default function App() {
             addToast(data.error || 'Failed to delete project', 'error');
           } else {
             if (currentProject === project.id) setCurrentProject(null);
-            triggerRefresh();
+             triggerFullRefresh();
             addToast(`Project "${project.name}" deleted`);
           }
         } catch {

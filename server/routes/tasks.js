@@ -54,9 +54,12 @@ function validateTaskInput(body, requireTitle = false) {
 // GET task stats — MUST be before /:id to avoid matching "stats" as an id
 router.get('/stats/summary', async (req, res) => {
   try {
-    const userFilter = req.user ? ' WHERE user_id = ?' : '';
-    const userFilterAnd = req.user ? ' AND user_id = ?' : '';
-    const userParams = req.user ? [req.user.id] : [];
+    if (!req.user) {
+      return res.json({ total: 0, byStatus: {}, byPriority: {}, completedToday: 0, completedThisWeek: 0 });
+    }
+    const userFilter = ' WHERE user_id = ?';
+    const userFilterAnd = ' AND user_id = ?';
+    const userParams = [req.user.id];
 
     const total = await db.prepare(`SELECT COUNT(*) as count FROM tasks${userFilter}`).get(...userParams);
     const byStatus = await db.prepare(
@@ -89,10 +92,11 @@ router.get('/stats/summary', async (req, res) => {
 // GET recent completions
 router.get('/recent/completed', async (req, res) => {
   try {
+    if (!req.user) return res.json([]);
     const limit = Math.min(parseInt(req.query.limit) || 5, 20);
     const tasks = await db.prepare(
-      'SELECT * FROM tasks WHERE completed_at IS NOT NULL ORDER BY completed_at DESC LIMIT ?'
-    ).all(limit);
+      'SELECT * FROM tasks WHERE completed_at IS NOT NULL AND user_id = ? ORDER BY completed_at DESC LIMIT ?'
+    ).all(req.user.id, limit);
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -102,49 +106,43 @@ router.get('/recent/completed', async (req, res) => {
 // GET all tasks (optionally filter by project_id or status)
 router.get('/', async (req, res) => {
   try {
+    // Unauthenticated users must not see orphaned data
+    if (!req.user) {
+      return res.json([]);
+    }
+
     const { project_id, status, search } = req.query;
-    let query = 'SELECT * FROM tasks';
-    const conditions = [];
-    const params = [];
+    let query = `
+      SELECT t.*,
+        COALESCE(s.total, 0) as subtask_total,
+        COALESCE(s.done, 0) as subtask_done
+      FROM tasks t
+      LEFT JOIN (
+        SELECT task_id, COUNT(*) as total, SUM(completed) as done
+        FROM subtasks GROUP BY task_id
+      ) s ON s.task_id = t.id
+    `;
+    const conditions = ['t.user_id = ?'];
+    const params = [req.user.id];
 
     if (project_id) {
-      conditions.push('project_id = ?');
+      conditions.push('t.project_id = ?');
       params.push(project_id);
     }
-    if (req.user) {
-      conditions.push('user_id = ?');
-      params.push(req.user.id);
-    }
     if (status && VALID_STATUSES.includes(status)) {
-      conditions.push('status = ?');
+      conditions.push('t.status = ?');
       params.push(status);
     }
     if (search) {
-      conditions.push('(title LIKE ? OR description LIKE ?)');
+      conditions.push('(t.title LIKE ? OR t.description LIKE ?)');
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-    query += ' ORDER BY position ASC, created_at DESC';
+    query += ' WHERE ' + conditions.join(' AND ');
+    query += ' ORDER BY t.position ASC, t.created_at DESC';
 
     const tasks = await db.prepare(query).all(...params);
-
-    // Enrich with subtask counts
-    const enriched = [];
-    for (const task of tasks) {
-      const subtaskStats = await db.prepare(
-        'SELECT COUNT(*) as total, SUM(completed) as done FROM subtasks WHERE task_id = ?'
-      ).get(task.id);
-      enriched.push({
-        ...task,
-        subtask_total: subtaskStats?.total || 0,
-        subtask_done: subtaskStats?.done || 0
-      });
-    }
-
-    res.json(enriched);
+    res.json(tasks);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

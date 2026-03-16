@@ -77,8 +77,13 @@ describe('API', () => {
   describe('Tasks API', () => {
     let projectId;
     let taskId;
+    let guestCookie;
 
     beforeAll(async () => {
+      // Create a guest session for authenticated requests
+      const guestRes = await request(app).post('/api/auth/guest');
+      const setCookie = guestRes.headers['set-cookie'];
+      guestCookie = setCookie ? (Array.isArray(setCookie) ? setCookie.join('; ') : setCookie) : '';
       // Ensure we have a project to assign tasks to
       const projects = await request(app).get('/api/projects');
       projectId = projects.body[0]?.id || 1;
@@ -87,6 +92,7 @@ describe('API', () => {
     it('POST /api/tasks creates a task', async () => {
       const res = await request(app)
         .post('/api/tasks')
+        .set('Cookie', guestCookie)
         .send({
           title: 'Test Task',
           description: 'A test description',
@@ -104,7 +110,7 @@ describe('API', () => {
     });
 
     it('GET /api/tasks returns array including the new task', async () => {
-      const res = await request(app).get('/api/tasks');
+      const res = await request(app).get('/api/tasks').set('Cookie', guestCookie);
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
       const found = res.body.find(t => t.id === taskId);
@@ -113,7 +119,7 @@ describe('API', () => {
     });
 
     it('GET /api/tasks?search= filters by search term', async () => {
-      const res = await request(app).get('/api/tasks?search=Test Task');
+      const res = await request(app).get('/api/tasks?search=Test Task').set('Cookie', guestCookie);
       expect(res.status).toBe(200);
       expect(res.body.some(t => t.title === 'Test Task')).toBe(true);
     });
@@ -198,12 +204,18 @@ describe('API', () => {
   describe('Subtasks API', () => {
     let parentTaskId;
     let subtaskId;
+    let guestCookie;
 
     beforeAll(async () => {
+      // Create a guest session for authenticated requests
+      const guestRes = await request(app).post('/api/auth/guest');
+      const setCookie = guestRes.headers['set-cookie'];
+      guestCookie = setCookie ? (Array.isArray(setCookie) ? setCookie.join('; ') : setCookie) : '';
       const projects = await request(app).get('/api/projects');
       const projectId = projects.body[0]?.id || 1;
       const res = await request(app)
         .post('/api/tasks')
+        .set('Cookie', guestCookie)
         .send({ title: 'Parent for subtasks', project_id: projectId });
       parentTaskId = res.body.id;
     });
@@ -283,7 +295,7 @@ describe('API', () => {
     });
 
     it('task list includes subtask counts', async () => {
-      const res = await request(app).get('/api/tasks');
+      const res = await request(app).get('/api/tasks').set('Cookie', guestCookie);
       const parent = res.body.find(t => t.id === parentTaskId);
       expect(parent).toBeDefined();
       expect(parent).toHaveProperty('subtask_total');

@@ -5,6 +5,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { timeAgo } from '../utils/timeAgo.js';
 
+/** Stable reference for ReactMarkdown plugins — prevents re-renders */
+const REMARK_PLUGINS = [remarkGfm];
+
 function isOverdue(dueDate) {
   if (!dueDate) return false;
   const today = new Date();
@@ -80,7 +83,7 @@ const TaskCard = React.memo(function TaskCard({ task, index, onEdit, onDelete, o
 
       {task.description && (
         <div className="task-card-desc markdown-body preview-mini">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{task.description}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={REMARK_PLUGINS}>{task.description}</ReactMarkdown>
         </div>
       )}
 

@@ -101,16 +101,23 @@ export default function AuthPage({ onAuth }) {
   };
 
   const handleSkip = async () => {
+    setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/auth/guest', { method: 'POST', credentials: 'include' });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.user) {
+        localStorage.setItem('taskflow-user', JSON.stringify(data.user));
         onAuth(data.user);
       } else {
-        onAuth(null, null); // fallback to old behavior
+        setError('Could not create guest session. Please try again.');
+        triggerShake();
       }
     } catch {
-      onAuth(null, null); // fallback if server unreachable
+      setError('Network error — is the server running?');
+      triggerShake();
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -75,7 +75,7 @@ app.use(sanitizeBody);
 // Global Limiter (100 reqs / 15 mins)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: IS_PROD ? 100 : 1000,
+  max: IS_PROD ? 300 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' }

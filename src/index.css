@@ -623,8 +623,8 @@ html, body, #root {
   flex: 1;
   display: flex;
   gap: clamp(12px, 1.5vw, 20px);
-  overflow-x: auto;
-  overflow-y: hidden;
+  /* Avoid nested scroll container — dnd only needs .column-cards to scroll */
+  overflow: visible;
 }
 
 .column {
@@ -700,19 +700,29 @@ html, body, #root {
   border-radius: var(--radius-md);
   padding: 14px 16px;
   cursor: grab;
-  transition: all var(--transition);
+  /* Transition visual props only — NOT transform, which fights dnd's real-time positioning */
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition), transform var(--transition);
   position: relative;
   /* Premium staggered entrance animation */
   opacity: 0;
   animation: cardSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* During active board drag: disable expensive GPU effects on ALL cards */
+.board-dragging .task-card {
+  backdrop-filter: none;
+  animation: none;
+  opacity: 1;
+  /* Kill transform transitions so dnd positioning is instant */
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
+}
+
+/* Dragging state — the ghost card left behind in original position */
 .task-card.dragging {
-  z-index: 1000;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
-  transform: scale(1.02);
-  opacity: 0.9;
-  border-color: var(--accent);
+  opacity: 0.4 !important;
+  transform: rotate(2deg) scale(0.96);
+  pointer-events: none;
+  cursor: grabbing;
 }
 /* Priority left-stripe colors */
 .task-card[data-priority="urgent"] { border-left-color: var(--urgent); }
@@ -727,11 +737,13 @@ html, body, #root {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
+/* During drag, suppress hover transforms on sibling cards */
+.board-dragging .task-card:not(.dragging):hover {
+  transform: none;
+}
 .task-card:active:not(.dragging) {
   transform: scale(0.98);
 }
-
-.task-card.dragging { opacity: 0.4 !important; transform: rotate(2deg) scale(0.96); }
 
 .task-card-header {
   display: flex;
