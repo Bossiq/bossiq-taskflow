@@ -19,6 +19,23 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="root"></div>
     <noscript>You need to enable JavaScript to run TaskFlow.</noscript>
+    <script>
+      // Auto-clear stale service workers that don't have skipWaiting.
+      // Runs once per version bump, then the PWA plugin installs the new SW.
+      (function() {
+        var SW_VERSION = '2';
+        if ('serviceWorker' in navigator && localStorage.getItem('sw-v') !== SW_VERSION) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(r) { r.unregister(); });
+          });
+          caches.keys().then(function(names) {
+            names.forEach(function(n) { caches.delete(n); });
+          });
+          localStorage.setItem('sw-v', SW_VERSION);
+          location.reload();
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
