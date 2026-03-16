@@ -195,9 +195,9 @@ export default function App() {
     }
   }, [getHeaders]);
 
-  // Initial load (after auth check)
+  // Initial load — only fetch data once we have a valid authenticated session
   useEffect(() => {
-    if (authChecked) {
+    if (authChecked && authResolved) {
       Promise.all([fetchTasks(), fetchProjects()])
         .then(() => {
           // Process recurring tasks — auto-create new instances of completed recurring tasks
@@ -206,8 +206,11 @@ export default function App() {
         .then(() => fetchTasks()) // Re-fetch to include newly created recurring instances
         .catch(() => {})
         .finally(() => setLoading(false));
+    } else if (authChecked && !authResolved) {
+      // Auth check complete but session invalid — stop loading, show auth page
+      setLoading(false);
     }
-  }, [authChecked]);
+  }, [authChecked, authResolved]);
 
   // Auto-retry on API error (cold start) every 5s, up to 6 attempts
   useEffect(() => {

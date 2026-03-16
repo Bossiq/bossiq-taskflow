@@ -303,10 +303,10 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
                       onClick={() => setForm(f => ({ ...f, due_date: val }))}>{label}</button>
                   );
                 })}
-                {form.due_date && (
-                  <button type="button" className="btn btn-sm btn-ghost date-shortcut date-clear"
-                    onClick={() => setForm(f => ({ ...f, due_date: '' }))}><X size={14} /></button>
-                )}
+                <button type="button" className="btn btn-sm btn-ghost date-shortcut date-clear"
+                  style={{ visibility: form.due_date ? 'visible' : 'hidden' }}
+                  onClick={() => setForm(f => ({ ...f, due_date: '' }))}
+                  aria-label="Clear due date"><X size={14} /></button>
               </div>
             </div>
           </div>
