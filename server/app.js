@@ -113,7 +113,7 @@ app.use((req, res, next) => {
 });
 
 // ── CSRF Protection (double-submit cookie) ──
-const CSRF_EXEMPT = ['/api/auth/login', '/api/auth/register', '/api/auth/guest', '/api/auth/csrf-token', '/api/auth/logout'];
+const CSRF_EXEMPT = ['/api/auth/login', '/api/auth/register', '/api/auth/guest', '/api/auth/csrf-token', '/api/auth/logout', '/api/tasks/process-recurring'];
 app.use('/api/', (req, res, next) => {
   // Skip in test environment — CSRF is a transport-layer concern
   if (process.env.NODE_ENV === 'test') return next();
