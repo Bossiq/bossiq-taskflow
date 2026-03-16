@@ -81,17 +81,20 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' }
 });
 
-// Strict Auth Limiter (5 reqs / 15 mins) - Prevent Brute Force
+// Strict Auth Limiter (prevent brute-force on login/register/guest)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: IS_PROD ? 5 : 50, // 5 attempts per IP
+  max: IS_PROD ? 30 : 50, // 30 attempts per IP in production
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' }
 });
 
 app.use('/api/', apiLimiter);
-app.use('/api/auth/', authLimiter); // Mount aggressive limiter on auth routes
+// Only rate-limit actual auth mutations, NOT csrf-token
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/guest', authLimiter);
 
 // ── Request ID + Logging ──
 app.use((req, res, next) => {
