@@ -81,7 +81,7 @@ const ColumnInnerList = React.memo(function ColumnInnerList({ tasks, onEdit, onD
 /**
  * Board — Kanban board with drag-and-drop, filtering, sorting, and batch actions.
  */
-export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, addToast, getHeaders }) {
+export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, addToast, getHeaders, isDraggingRef }) {
   const [sortBy, setSortBy] = useState(() => {
     try { return localStorage.getItem('taskflow-sort') || 'priority'; }
     catch { return 'priority'; }
@@ -156,10 +156,14 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
 
   const onDragStart = useCallback(() => {
     setIsDragging(true);
-  }, []);
+    if (isDraggingRef) isDraggingRef.current = true;
+  }, [isDraggingRef]);
 
   const onDragEnd = useCallback((result) => {
     setIsDragging(false);
+    // Wait a tick before allowing WebSocket refreshes again
+    // so any queued task:change events don't immediately re-render
+    setTimeout(() => { if (isDraggingRef) isDraggingRef.current = false; }, 500);
     const { source, destination, draggableId } = result;
     
     // Dropped outside a valid droppable area
@@ -185,7 +189,7 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
         body: JSON.stringify({ position: destination.index })
       }).catch(() => addToast?.('Failed to reorder task', 'error'));
     }
-  }, [onMove, getHeaders, addToast]);
+  }, [onMove, getHeaders, addToast, isDraggingRef]);
 
   // Apply filters then sort
   const filteredAndSorted = useMemo(() => {

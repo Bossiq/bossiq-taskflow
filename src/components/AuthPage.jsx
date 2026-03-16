@@ -52,6 +52,8 @@ export default function AuthPage({ onAuth }) {
     if (rateLimitSeconds > 0) return; // Block while rate-limited
     setError('');
     setLoading(true);
+    setGuestColdStart(false);
+    guestTimerRef.current = setTimeout(() => setGuestColdStart(true), 3000);
 
     try {
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
@@ -96,13 +98,21 @@ export default function AuthPage({ onAuth }) {
       setError('Network error — is the server running?');
       triggerShake();
     } finally {
+      clearTimeout(guestTimerRef.current);
+      setGuestColdStart(false);
       setLoading(false); // ALWAYS reset loading, no matter what
     }
   };
 
+  const [guestColdStart, setGuestColdStart] = useState(false);
+  const guestTimerRef = useRef(null);
+
   const handleSkip = async () => {
     setLoading(true);
     setError('');
+    setGuestColdStart(false);
+    // Show cold-start message after 3 seconds of waiting
+    guestTimerRef.current = setTimeout(() => setGuestColdStart(true), 3000);
     try {
       const res = await fetch('/api/auth/guest', { method: 'POST', credentials: 'include' });
       const data = await res.json();
@@ -117,6 +127,8 @@ export default function AuthPage({ onAuth }) {
       setError('Network error — is the server running?');
       triggerShake();
     } finally {
+      clearTimeout(guestTimerRef.current);
+      setGuestColdStart(false);
       setLoading(false);
     }
   };
@@ -253,19 +265,30 @@ export default function AuthPage({ onAuth }) {
 
             <button type="submit" className="btn btn-primary auth-submit" disabled={loading || rateLimitSeconds > 0}>
               {loading ? (
-                <span className="auth-spinner">Signing in...</span>
+                <span className="auth-spinner">Connecting...</span>
               ) : rateLimitSeconds > 0 ? (
                 `Wait ${rateLimitSeconds}s`
               ) : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
 
+          {guestColdStart && (
+            <div className="cold-start-notice" style={{ marginTop: 12, textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <span style={{ fontSize: '1.2rem' }}>⌛</span>
+              <p style={{ margin: '6px 0 0' }}>The server is waking up — this usually takes 15–30s on the first visit.</p>
+            </div>
+          )}
+
           <div className="auth-divider">
             <span>or</span>
           </div>
 
-          <button className="btn btn-ghost auth-skip" onClick={handleSkip}>
-            Continue as Guest <ArrowRight size={16} style={{display:'inline',verticalAlign:'middle',marginLeft:4}} />
+          <button className="btn btn-ghost auth-skip" onClick={handleSkip} disabled={loading}>
+            {loading ? (
+              <span className="auth-spinner">Connecting...</span>
+            ) : (
+              <>Continue as Guest <ArrowRight size={16} style={{display:'inline',verticalAlign:'middle',marginLeft:4}} /></>
+            )}
           </button>
         </div>
       </div>

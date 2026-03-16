@@ -15,12 +15,15 @@ router.get('/', async (req, res) => {
     const projects = userId ? await db.prepare(baseQuery).all(userId) : await db.prepare(baseQuery).all();
     const withCounts = [];
     for (const p of projects) {
+      // Filter task counts by user_id so we only count the current user's tasks
+      const countParams = userId ? [p.id, userId] : [p.id];
+      const userFilter = userId ? ' AND user_id = ?' : '';
       const counts = await db.prepare(
-        'SELECT status, COUNT(*) as count FROM tasks WHERE project_id = ? GROUP BY status'
-      ).all(p.id);
+        `SELECT status, COUNT(*) as count FROM tasks WHERE project_id = ?${userFilter} GROUP BY status`
+      ).all(...countParams);
       const total = await db.prepare(
-        'SELECT COUNT(*) as count FROM tasks WHERE project_id = ?'
-      ).get(p.id);
+        `SELECT COUNT(*) as count FROM tasks WHERE project_id = ?${userFilter}`
+      ).get(...countParams);
       withCounts.push({
         ...p,
         taskCounts: Object.fromEntries(counts.map(r => [r.status, r.count])),

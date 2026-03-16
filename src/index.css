@@ -701,7 +701,7 @@ html, body, #root {
   padding: 14px 16px;
   cursor: grab;
   /* Transition visual props only — NOT transform, which fights dnd's real-time positioning */
-  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition), transform var(--transition);
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
   position: relative;
   /* Premium staggered entrance animation */
   opacity: 0;
@@ -717,12 +717,12 @@ html, body, #root {
   transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
-/* Dragging state — the ghost card left behind in original position */
+/* Dragging state — the card being actively dragged */
 .task-card.dragging {
-  opacity: 0.4 !important;
-  transform: rotate(2deg) scale(0.96);
-  pointer-events: none;
+  opacity: 0.85;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 2px var(--accent);
   cursor: grabbing;
+  z-index: 9999;
 }
 /* Priority left-stripe colors */
 .task-card[data-priority="urgent"] { border-left-color: var(--urgent); }

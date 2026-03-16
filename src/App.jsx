@@ -49,6 +49,7 @@ export default function App() {
   const isMobile = () => window.innerWidth <= 768;
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const toastIdRef = useRef(0);
+  const isDraggingRef = useRef(false);
 
   // Auto-close sidebar when window shrinks below mobile breakpoint
   useEffect(() => {
@@ -69,8 +70,10 @@ export default function App() {
     return () => document.body.classList.remove('modal-open');
   }, [showModal, confirmDialog, showShortcuts, showSettings]);
 
-  // ── CSRF token fetch ──
+  // ── CSRF token + server pre-wake ──
   useEffect(() => {
+    // Pre-wake the server so it's ready when user clicks Guest or Login
+    fetch(`${API}/health`).catch(() => {});
     fetch(`${API}/auth/csrf-token`, { credentials: 'include' })
       .then(r => r.json())
       .then(d => setCsrfToken(d.csrfToken))
@@ -208,8 +211,10 @@ export default function App() {
     setRefreshKey(k => k + 1);
   }, [fetchTasks, fetchProjects]);
 
-  // ── WebSocket real-time sync ──
-  useSocket(() => triggerRefresh());
+  // ── WebSocket real-time sync (skip during drag to avoid killing DnD state) ──
+  useSocket(() => {
+    if (!isDraggingRef.current) triggerRefresh();
+  });
 
   // ── Process recurring tasks helper ──
   const processRecurring = async () => {
@@ -580,7 +585,7 @@ export default function App() {
         {view === 'board' ? (
           <ErrorBoundary>
             <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Board...</p></div>}>
-              <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} />
+              <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} isDraggingRef={isDraggingRef} />
             </Suspense>
           </ErrorBoundary>
         ) : view === 'calendar' ? (

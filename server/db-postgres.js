@@ -67,7 +67,12 @@ export function createPostgresAdapter(connectionString) {
         /** Execute a write query (INSERT/UPDATE/DELETE) */
         async run(...params) {
           try {
-            const result = await pool.query(pgSql, params);
+            // Auto-append RETURNING id for INSERT so lastInsertRowid works
+            let execSql = pgSql;
+            if (/^\s*INSERT\s/i.test(execSql) && !/RETURNING/i.test(execSql)) {
+              execSql = execSql.replace(/;\s*$/, '') + ' RETURNING id;';
+            }
+            const result = await pool.query(execSql, params);
             return {
               changes: result.rowCount || 0,
               lastInsertRowid: result.rows?.[0]?.id || null
