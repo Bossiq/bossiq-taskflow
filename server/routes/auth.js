@@ -264,6 +264,15 @@ router.delete('/account', requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/auth/me — Verify session and return current user.
+ * Used by the frontend on mount to validate that the saved session is still valid.
+ * requireAuth middleware checks the DB — if user was deleted, returns 401 and clears cookie.
+ */
+router.get('/me', requireAuth, (req, res) => {
+  res.json({ id: req.user.id, username: req.user.username });
+});
+
+/**
  * GET /api/auth/csrf-token — Generate CSRF token (double-submit cookie pattern)
  */
 router.get('/csrf-token', (req, res) => {

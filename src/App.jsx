@@ -87,18 +87,48 @@ export default function App() {
     return h;
   }, [csrfToken]);
 
-  // Check saved auth on mount
+  // Verify saved auth on mount — don't trust localStorage alone, validate with the server
   useEffect(() => {
     const savedUser = localStorage.getItem('taskflow-user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-        setAuthResolved(true);
-      } catch { /* ignore */ }
-    }
-    // Clear legacy skip flag — guests now always get a real session
     localStorage.removeItem('taskflow-skipped');
-    setAuthChecked(true);
+
+    if (!savedUser) {
+      setAuthChecked(true);
+      return;
+    }
+
+    // Optimistically parse the saved user so the app can render faster
+    let parsedUser;
+    try {
+      parsedUser = JSON.parse(savedUser);
+    } catch {
+      localStorage.removeItem('taskflow-user');
+      setAuthChecked(true);
+      return;
+    }
+
+    // Verify the session is still valid server-side
+    fetch(`${API}/auth/me`, { credentials: 'include' })
+      .then(res => {
+        if (res.ok) {
+          return res.json().then(serverUser => {
+            // Session is valid — use server data as source of truth
+            setUser(serverUser);
+            localStorage.setItem('taskflow-user', JSON.stringify(serverUser));
+            setAuthResolved(true);
+          });
+        }
+        // Session invalid (401) — user was deleted or cookie is stale
+        localStorage.removeItem('taskflow-user');
+        setUser(null);
+        setAuthResolved(false);
+      })
+      .catch(() => {
+        // Network error — use cached user optimistically (server might be cold-starting)
+        setUser(parsedUser);
+        setAuthResolved(true);
+      })
+      .finally(() => setAuthChecked(true));
   }, []);
 
   const handleAuth = (u) => {
