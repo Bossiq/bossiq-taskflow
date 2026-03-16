@@ -162,10 +162,9 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
   const onDragEnd = useCallback((result) => {
     setIsDragging(false);
     // Wait a tick before allowing WebSocket refreshes again
-    // so any queued task:change events don't immediately re-render
     setTimeout(() => { if (isDraggingRef) isDraggingRef.current = false; }, 500);
     const { source, destination, draggableId } = result;
-    
+
     // Dropped outside a valid droppable area
     if (!destination) return;
 
@@ -175,12 +174,12 @@ export default function Board({ tasks, onEdit, onDelete, onMove, onBatchAction, 
     }
 
     const taskId = parseInt(draggableId, 10);
-    
+
     // Changing columns — delegate to parent's optimistic handler
     if (source.droppableId !== destination.droppableId) {
       onMove?.(taskId, destination.droppableId);
-    } 
-    // Same column - reordering (fire-and-forget, no full refresh needed)
+    }
+    // Same column - reordering
     else {
       fetch(`/api/tasks/${taskId}/reorder`, {
         method: 'PATCH',

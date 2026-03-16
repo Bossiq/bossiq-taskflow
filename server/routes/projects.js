@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   try {
     const userId = req.user?.id;
     const baseQuery = userId
-      ? 'SELECT * FROM projects WHERE user_id = ? OR user_id IS NULL ORDER BY created_at DESC'
+      ? 'SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC'
       : 'SELECT * FROM projects WHERE user_id IS NULL ORDER BY created_at DESC';
     const projects = userId ? await db.prepare(baseQuery).all(userId) : await db.prepare(baseQuery).all();
     const withCounts = [];

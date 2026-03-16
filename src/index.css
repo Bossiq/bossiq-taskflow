@@ -701,7 +701,7 @@ html, body, #root {
   padding: 14px 16px;
   cursor: grab;
   /* Transition visual props only — NOT transform, which fights dnd's real-time positioning */
-  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
   position: relative;
   /* Premium staggered entrance animation */
   opacity: 0;
@@ -711,15 +711,16 @@ html, body, #root {
 /* During active board drag: disable expensive GPU effects on ALL cards */
 .board-dragging .task-card {
   backdrop-filter: none;
-  animation: none;
-  opacity: 1;
-  /* Kill transform transitions so dnd positioning is instant */
-  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
+  animation: none !important;
+  opacity: 1 !important;
+  /* Kill all transitions so dnd positioning is instant */
+  transition: none !important;
 }
 
-/* Dragging state — the card being actively dragged */
+/* Dragging state — the card being actively dragged (portal clone) */
 .task-card.dragging {
-  opacity: 0.85;
+  animation: none !important;
+  opacity: 1 !important;
   box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 2px var(--accent);
   cursor: grabbing;
   z-index: 9999;
