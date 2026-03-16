@@ -7,14 +7,14 @@ const router = Router();
  * GET /api/activity — Recent activity across all tasks
  * Query: ?limit=20 (max 50)
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 20, 50);
     const userId = req.user?.id;
     const query = userId
       ? `SELECT a.*, t.title as task_title FROM activity_log a LEFT JOIN tasks t ON a.task_id = t.id WHERE a.user_id = ? OR a.user_id IS NULL ORDER BY a.created_at DESC LIMIT ?`
       : `SELECT a.*, t.title as task_title FROM activity_log a LEFT JOIN tasks t ON a.task_id = t.id ORDER BY a.created_at DESC LIMIT ?`;
-    const rows = userId ? db.prepare(query).all(userId, limit) : db.prepare(query).all(limit);
+    const rows = userId ? await db.prepare(query).all(userId, limit) : await db.prepare(query).all(limit);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -24,13 +24,13 @@ router.get('/', (req, res) => {
 /**
  * GET /api/activity/streak — Productivity streak (consecutive days with completions)
  */
-router.get('/streak', (req, res) => {
+router.get('/streak', async (req, res) => {
   try {
     const userId = req.user?.id;
     const query = userId
       ? `SELECT DISTINCT date(created_at) as day FROM activity_log WHERE action = 'completed' AND (user_id = ? OR user_id IS NULL) ORDER BY day DESC LIMIT 365`
       : `SELECT DISTINCT date(created_at) as day FROM activity_log WHERE action = 'completed' ORDER BY day DESC LIMIT 365`;
-    const days = userId ? db.prepare(query).all(userId) : db.prepare(query).all();
+    const days = userId ? await db.prepare(query).all(userId) : await db.prepare(query).all();
 
     let streak = 0;
     const today = new Date();

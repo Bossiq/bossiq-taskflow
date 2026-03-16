@@ -3,22 +3,7 @@ import { Pencil, Trash2, RotateCw, ListTodo } from 'lucide-react';
 import { Draggable } from '@hello-pangea/dnd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-/**
- * Formats a date string into relative time (e.g., "2h ago", "3d ago").
- */
-function timeAgo(dateStr) {
-  if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString();
-}
+import { timeAgo } from '../utils/timeAgo.js';
 
 function isOverdue(dueDate) {
   if (!dueDate) return false;

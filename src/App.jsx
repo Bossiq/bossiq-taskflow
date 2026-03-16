@@ -5,6 +5,7 @@ import ConfirmDialog from './components/ConfirmDialog.jsx';
 import Toast from './components/Toast.jsx';
 import AuthPage from './components/AuthPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import useSocket from './hooks/useSocket.js';
 import { Menu, Search, X, Plus, Loader2 } from 'lucide-react';
 
@@ -566,21 +567,29 @@ export default function App() {
         </div>
 
         {view === 'board' ? (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Board...</p></div>}>
-            <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Board...</p></div>}>
+              <Board tasks={tasks} onEdit={openEdit} onDelete={handleDeleteRequest} onMove={handleMove} onBatchAction={triggerRefresh} addToast={addToast} getHeaders={getHeaders} />
+            </Suspense>
+          </ErrorBoundary>
         ) : view === 'calendar' ? (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Calendar...</p></div>}>
-            <Calendar tasks={tasks} onEdit={openEdit} onNew={openNew} />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Calendar...</p></div>}>
+              <Calendar tasks={tasks} onEdit={openEdit} onNew={openNew} />
+            </Suspense>
+          </ErrorBoundary>
         ) : view === 'gantt' ? (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Timeline...</p></div>}>
-            <Gantt tasks={tasks} onEdit={openEdit} />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Timeline...</p></div>}>
+              <Gantt tasks={tasks} onEdit={openEdit} />
+            </Suspense>
+          </ErrorBoundary>
         ) : (
-          <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Overview...</p></div>}>
-            <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} overdueTasks={overdueTasks} onNavigate={(v) => setView(v)} onNewTask={openNew} onExportCSV={handleExportCSV} user={user} />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<div className="app-loading" style={{ minHeight: '50vh' }}><span><Loader2 size={24} className="spin-icon" /></span><p>Loading Overview...</p></div>}>
+              <Dashboard refreshKey={refreshKey} getHeaders={getHeaders} overdueTasks={overdueTasks} onNavigate={(v) => setView(v)} onNewTask={openNew} onExportCSV={handleExportCSV} user={user} />
+            </Suspense>
+          </ErrorBoundary>
         )}
       </main>
 
@@ -687,6 +696,7 @@ export default function App() {
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.error);
                         addToast('Account deleted');
+                        setConfirmDialog(null);
                         handleLogout();
                       } catch (err) {
                         addToast(err.message, 'error');

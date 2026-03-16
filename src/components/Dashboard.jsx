@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Circle, Pencil, ArrowRight, Check, Trash2, Plus, ChevronRight, AlertTriangle
 } from 'lucide-react';
+import { timeAgo } from '../utils/timeAgo.js';
 
 const ACTION_ICONS = {
   created: <Circle size={12} fill="currentColor" />,
@@ -23,19 +24,6 @@ const ACTION_COLORS = {
   subtask_completed: '#22c55e'
 };
 
-function timeAgo(dateStr) {
-  if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString();
-}
-
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
@@ -54,7 +42,7 @@ export default function Dashboard({ refreshKey, getHeaders, overdueTasks: extern
   const [activity, setActivity] = useState([]);
   const [streak, setStreak] = useState(0);
   const [overdue, setOverdue] = useState([]);
-  const headers = getHeaders?.() || {};
+  const headers = useMemo(() => getHeaders?.() || {}, [getHeaders]);
 
   useEffect(() => {
     fetch('/api/tasks/stats/summary', { headers, credentials: 'include' })

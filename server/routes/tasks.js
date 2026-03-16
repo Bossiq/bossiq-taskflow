@@ -4,9 +4,9 @@ import db from '../db.js';
 const router = Router();
 
 /** Helper: log an activity event */
-function logActivity(taskId, action, details = '', userId = null) {
+async function logActivity(taskId, action, details = '', userId = null) {
   try {
-    db.prepare('INSERT INTO activity_log (task_id, action, details, user_id) VALUES (?, ?, ?, ?)').run(taskId, action, details, userId);
+    await db.prepare('INSERT INTO activity_log (task_id, action, details, user_id) VALUES (?, ?, ?, ?)').run(taskId, action, details, userId);
   } catch { /* non-critical */ }
 }
 
@@ -52,24 +52,24 @@ function validateTaskInput(body, requireTitle = false) {
 }
 
 // GET task stats — MUST be before /:id to avoid matching "stats" as an id
-router.get('/stats/summary', (req, res) => {
+router.get('/stats/summary', async (req, res) => {
   try {
     const userFilter = req.user ? ' WHERE user_id = ?' : '';
     const userFilterAnd = req.user ? ' AND user_id = ?' : '';
     const userParams = req.user ? [req.user.id] : [];
 
-    const total = db.prepare(`SELECT COUNT(*) as count FROM tasks${userFilter}`).get(...userParams);
-    const byStatus = db.prepare(
+    const total = await db.prepare(`SELECT COUNT(*) as count FROM tasks${userFilter}`).get(...userParams);
+    const byStatus = await db.prepare(
       `SELECT status, COUNT(*) as count FROM tasks${userFilter} GROUP BY status`
     ).all(...userParams);
-    const byPriority = db.prepare(
+    const byPriority = await db.prepare(
       `SELECT priority, COUNT(*) as count FROM tasks${userFilter} GROUP BY priority`
     ).all(...userParams);
-    const completedToday = db.prepare(`
+    const completedToday = await db.prepare(`
       SELECT COUNT(*) as count FROM tasks
       WHERE completed_at >= date('now', 'start of day')${userFilterAnd}
     `).get(...userParams);
-    const completedThisWeek = db.prepare(`
+    const completedThisWeek = await db.prepare(`
       SELECT COUNT(*) as count FROM tasks
       WHERE completed_at >= date('now', '-7 days')${userFilterAnd}
     `).get(...userParams);
@@ -87,10 +87,10 @@ router.get('/stats/summary', (req, res) => {
 });
 
 // GET recent completions
-router.get('/recent/completed', (req, res) => {
+router.get('/recent/completed', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 5, 20);
-    const tasks = db.prepare(
+    const tasks = await db.prepare(
       'SELECT * FROM tasks WHERE completed_at IS NOT NULL ORDER BY completed_at DESC LIMIT ?'
     ).all(limit);
     res.json(tasks);
@@ -100,7 +100,7 @@ router.get('/recent/completed', (req, res) => {
 });
 
 // GET all tasks (optionally filter by project_id or status)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { project_id, status, search } = req.query;
     let query = 'SELECT * FROM tasks';
@@ -129,19 +129,20 @@ router.get('/', (req, res) => {
     }
     query += ' ORDER BY position ASC, created_at DESC';
 
-    const tasks = db.prepare(query).all(...params);
+    const tasks = await db.prepare(query).all(...params);
 
     // Enrich with subtask counts
-    const enriched = tasks.map(task => {
-      const subtaskStats = db.prepare(
+    const enriched = [];
+    for (const task of tasks) {
+      const subtaskStats = await db.prepare(
         'SELECT COUNT(*) as total, SUM(completed) as done FROM subtasks WHERE task_id = ?'
       ).get(task.id);
-      return {
+      enriched.push({
         ...task,
         subtask_total: subtaskStats?.total || 0,
         subtask_done: subtaskStats?.done || 0
-      };
-    });
+      });
+    }
 
     res.json(enriched);
   } catch (err) {
@@ -150,9 +151,9 @@ router.get('/', (req, res) => {
 });
 
 // GET single task
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     if (!task) return res.status(404).json({ error: 'Task not found' });
     res.json(task);
   } catch (err) {
@@ -161,20 +162,20 @@ router.get('/:id', (req, res) => {
 });
 
 // POST create task
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const errors = validateTaskInput(req.body, true);
     if (errors.length > 0) return res.status(400).json({ error: errors.join('; ') });
 
     const { title, description, status, priority, label, due_date, project_id, recurrence_rule } = req.body;
 
-    const maxPos = db.prepare(
+    const maxPos = await db.prepare(
       'SELECT COALESCE(MAX(position), -1) as max FROM tasks WHERE status = ?'
     ).get(status || 'todo');
 
     const userId = req.user?.id || null;
 
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id, recurrence_rule)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
@@ -190,8 +191,8 @@ router.post('/', (req, res) => {
       recurrence_rule || null
     );
 
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
-    logActivity(task.id, 'created', `Created task "${task.title}"`, userId);
+    const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
+    await logActivity(task.id, 'created', `Created task "${task.title}"`, userId);
     broadcast(req, 'created', task);
     res.status(201).json(task);
   } catch (err) {
@@ -200,20 +201,20 @@ router.post('/', (req, res) => {
 });
 
 // PUT update task
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const errors = validateTaskInput(req.body, false);
     if (errors.length > 0) return res.status(400).json({ error: errors.join('; ') });
 
     const { title, description, status, priority, label, due_date, project_id, recurrence_rule } = req.body;
-    const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const existing = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Task not found' });
 
     const completedAt = (status === 'done' && existing.status !== 'done')
       ? new Date().toISOString()
       : (status !== 'done' ? null : existing.completed_at);
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE tasks SET title=?, description=?, status=?, priority=?, label=?, due_date=?, project_id=?,
         updated_at=CURRENT_TIMESTAMP, completed_at=?, recurrence_rule=?
       WHERE id=?
@@ -230,8 +231,8 @@ router.put('/:id', (req, res) => {
       req.params.id
     );
 
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
-    logActivity(task.id, 'updated', `Updated task "${task.title}"`);
+    const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    await logActivity(task.id, 'updated', `Updated task "${task.title}"`);
     broadcast(req, 'updated', task);
     res.json(task);
   } catch (err) {
@@ -240,28 +241,28 @@ router.put('/:id', (req, res) => {
 });
 
 // PATCH move task (change status + reorder)
-router.patch('/:id/move', (req, res) => {
+router.patch('/:id/move', async (req, res) => {
   try {
     const { status, position } = req.body;
     if (status && !VALID_STATUSES.includes(status)) {
       return res.status(400).json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` });
     }
 
-    const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const existing = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Task not found' });
 
     const completedAt = (status === 'done' && existing.status !== 'done')
       ? new Date().toISOString()
       : (status !== 'done' ? null : existing.completed_at);
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE tasks SET status=?, position=?, updated_at=CURRENT_TIMESTAMP, completed_at=?
       WHERE id=?
     `).run(status, position ?? 0, completedAt, req.params.id);
 
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     const action = task.status === 'done' && existing.status !== 'done' ? 'completed' : 'moved';
-    logActivity(task.id, action, `${action === 'completed' ? 'Completed' : 'Moved'} task "${task.title}" to ${status}`);
+    await logActivity(task.id, action, `${action === 'completed' ? 'Completed' : 'Moved'} task "${task.title}" to ${status}`);
     broadcast(req, 'moved', task);
     res.json(task);
   } catch (err) {
@@ -273,13 +274,13 @@ router.patch('/:id/move', (req, res) => {
  * POST /process-recurring — Auto-create new instances of completed recurring tasks
  * Called on app load. Creates a new 'todo' copy with the next due date.
  */
-router.post('/process-recurring', (req, res) => {
+router.post('/process-recurring', async (req, res) => {
   try {
     const userFilter = req.user ? ' AND t.user_id = ?' : '';
     const userParams = req.user ? [req.user.id] : [];
 
     // Find completed recurring tasks that don't already have a child
-    const recurring = db.prepare(`
+    const recurring = await db.prepare(`
       SELECT t.* FROM tasks t
       WHERE t.status = 'done'
         AND t.recurrence_rule IS NOT NULL
@@ -291,43 +292,40 @@ router.post('/process-recurring', (req, res) => {
     `).all(...userParams);
 
     let created = 0;
-    const processAll = db.transaction(() => {
-      for (const task of recurring) {
-        // Calculate next due date
-        let nextDue = null;
-        if (task.due_date) {
-          const d = new Date(task.due_date);
-          if (task.recurrence_rule === 'daily') d.setDate(d.getDate() + 1);
-          else if (task.recurrence_rule === 'weekly') d.setDate(d.getDate() + 7);
-          else if (task.recurrence_rule === 'monthly') d.setMonth(d.getMonth() + 1);
-          nextDue = d.toISOString().split('T')[0];
-        }
-
-        const maxPos = db.prepare(
-          "SELECT COALESCE(MAX(position), -1) as max FROM tasks WHERE status = 'todo'"
-        ).get();
-
-        db.prepare(`
-          INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id, recurrence_rule, recurrence_parent_id)
-          VALUES (?, ?, 'todo', ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          task.title,
-          task.description || '',
-          task.priority || 'medium',
-          task.label || '',
-          nextDue,
-          task.project_id,
-          maxPos.max + 1,
-          task.user_id,
-          task.recurrence_rule,
-          task.id
-        );
-        logActivity(null, 'recurring_created', `Recurring ${task.recurrence_rule}: "${task.title}" auto-created (next due: ${nextDue || 'no date'})`, task.user_id);
-        created++;
+    for (const task of recurring) {
+      // Calculate next due date
+      let nextDue = null;
+      if (task.due_date) {
+        const d = new Date(task.due_date);
+        if (task.recurrence_rule === 'daily') d.setDate(d.getDate() + 1);
+        else if (task.recurrence_rule === 'weekly') d.setDate(d.getDate() + 7);
+        else if (task.recurrence_rule === 'monthly') d.setMonth(d.getMonth() + 1);
+        nextDue = d.toISOString().split('T')[0];
       }
-    });
 
-    processAll();
+      const maxPos = await db.prepare(
+        "SELECT COALESCE(MAX(position), -1) as max FROM tasks WHERE status = 'todo'"
+      ).get();
+
+      await db.prepare(`
+        INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id, recurrence_rule, recurrence_parent_id)
+        VALUES (?, ?, 'todo', ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        task.title,
+        task.description || '',
+        task.priority || 'medium',
+        task.label || '',
+        nextDue,
+        task.project_id,
+        maxPos.max + 1,
+        task.user_id,
+        task.recurrence_rule,
+        task.id
+      );
+      await logActivity(null, 'recurring_created', `Recurring ${task.recurrence_rule}: "${task.title}" auto-created (next due: ${nextDue || 'no date'})`, task.user_id);
+      created++;
+    }
+
     res.json({ processed: recurring.length, created });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -335,7 +333,7 @@ router.post('/process-recurring', (req, res) => {
 });
 
 // PATCH batch operations
-router.patch('/batch', (req, res) => {
+router.patch('/batch', async (req, res) => {
   try {
     const { ids, action, value } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -348,31 +346,27 @@ router.patch('/batch', (req, res) => {
       return res.status(400).json({ error: 'action is required' });
     }
 
-    const batchRun = db.transaction(() => {
-      let affected = 0;
-      for (const id of ids) {
-        const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
-        if (!task) continue;
+    let affected = 0;
+    for (const id of ids) {
+      const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+      if (!task) continue;
 
-        if (action === 'move' && VALID_STATUSES.includes(value)) {
-          const completedAt = (value === 'done' && task.status !== 'done') ? new Date().toISOString() : (value !== 'done' ? null : task.completed_at);
-          db.prepare('UPDATE tasks SET status=?, completed_at=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(value, completedAt, id);
-          logActivity(id, value === 'done' ? 'completed' : 'moved', `Batch moved "${task.title}" to ${value}`);
-          affected++;
-        } else if (action === 'priority' && VALID_PRIORITIES.includes(value)) {
-          db.prepare('UPDATE tasks SET priority=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(value, id);
-          logActivity(id, 'updated', `Batch changed "${task.title}" priority to ${value}`);
-          affected++;
-        } else if (action === 'delete') {
-          logActivity(id, 'deleted', `Deleted task "${task.title}"`);
-          db.prepare('DELETE FROM tasks WHERE id=?').run(id);
-          affected++;
-        }
+      if (action === 'move' && VALID_STATUSES.includes(value)) {
+        const completedAt = (value === 'done' && task.status !== 'done') ? new Date().toISOString() : (value !== 'done' ? null : task.completed_at);
+        await db.prepare('UPDATE tasks SET status=?, completed_at=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(value, completedAt, id);
+        await logActivity(id, value === 'done' ? 'completed' : 'moved', `Batch moved "${task.title}" to ${value}`);
+        affected++;
+      } else if (action === 'priority' && VALID_PRIORITIES.includes(value)) {
+        await db.prepare('UPDATE tasks SET priority=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(value, id);
+        await logActivity(id, 'updated', `Batch changed "${task.title}" priority to ${value}`);
+        affected++;
+      } else if (action === 'delete') {
+        await logActivity(id, 'deleted', `Deleted task "${task.title}"`);
+        await db.prepare('DELETE FROM tasks WHERE id=?').run(id);
+        affected++;
       }
-      return affected;
-    });
+    }
 
-    const affected = batchRun();
     res.json({ success: true, affected });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -380,12 +374,12 @@ router.patch('/batch', (req, res) => {
 });
 
 // DELETE task
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     if (!task) return res.status(404).json({ error: 'Task not found' });
-    logActivity(req.params.id, 'deleted', `Deleted task "${task.title}"`);
-    db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
+    await logActivity(req.params.id, 'deleted', `Deleted task "${task.title}"`);
+    await db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
     broadcast(req, 'deleted', { id: Number(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -396,33 +390,30 @@ router.delete('/:id', (req, res) => {
 /**
  * PATCH /:id/reorder — Reorder a task within its column
  */
-router.patch('/:id/reorder', (req, res) => {
+router.patch('/:id/reorder', async (req, res) => {
   try {
     const { position } = req.body;
     if (typeof position !== 'number' || position < 0) {
       return res.status(400).json({ error: 'Valid position is required' });
     }
 
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
-    const reorder = db.transaction(() => {
-      // Get all tasks in same column, ordered by position
-      const siblings = db.prepare(
-        'SELECT id, position FROM tasks WHERE status = ? AND id != ? ORDER BY position ASC'
-      ).all(task.status, task.id);
+    // Get all tasks in same column, ordered by position
+    const siblings = await db.prepare(
+      'SELECT id, position FROM tasks WHERE status = ? AND id != ? ORDER BY position ASC'
+    ).all(task.status, task.id);
 
-      // Insert at new position
-      siblings.splice(position, 0, { id: task.id, position });
+    // Insert at new position
+    siblings.splice(position, 0, { id: task.id, position });
 
-      // Update all positions
-      const update = db.prepare('UPDATE tasks SET position = ? WHERE id = ?');
-      siblings.forEach((t, i) => update.run(i, t.id));
-    });
+    // Update all positions
+    for (let i = 0; i < siblings.length; i++) {
+      await db.prepare('UPDATE tasks SET position = ? WHERE id = ?').run(i, siblings[i].id);
+    }
 
-    reorder();
-
-    const updated = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    const updated = await db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -432,9 +423,9 @@ router.patch('/:id/reorder', (req, res) => {
 /**
  * GET /:id/activity — Fetch the audit log timeline for a task
  */
-router.get('/:id/activity', (req, res) => {
+router.get('/:id/activity', async (req, res) => {
   try {
-    const logs = db.prepare(`
+    const logs = await db.prepare(`
       SELECT a.*, u.username as user_name 
       FROM activity_log a
       LEFT JOIN users u ON a.user_id = u.id

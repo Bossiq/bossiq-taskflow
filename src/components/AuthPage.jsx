@@ -131,11 +131,11 @@ export default function AuthPage({ onAuth }) {
           </div>
           <h2 className="auth-branding-title">Manage your work.<br/>Master your time.</h2>
           <p className="auth-branding-desc">
-            A production-ready Kanban board showcasing React, Express, SQLite, and modern web security — built as a portfolio project.
+            A production-ready Kanban board showcasing React, Express, PostgreSQL, and modern web security — built as a portfolio project.
           </p>
           <div className="auth-branding-stats">
             <div className="stat"><strong>Full-Stack</strong> React + Express</div>
-            <div className="stat"><strong>106</strong> Tests</div>
+            <div className="stat"><strong>121</strong> Tests</div>
             <div className="stat"><strong>Zero</strong> Setup</div>
           </div>
         </div>

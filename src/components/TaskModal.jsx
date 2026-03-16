@@ -1,21 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Trash2 } from 'lucide-react';
+import { timeAgo } from '../utils/timeAgo.js';
 
 
 const API = '/api';
-
-function timeAgo(dateStr) {
-  if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 /**
  * TaskModal — Create/edit task form with subtask checklist.
@@ -140,7 +128,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
     try {
       const res = await fetch(`${API}/tasks/${task.id}/subtasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ title: newSubtask.trim() })
       });
@@ -156,6 +144,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
     try {
       const res = await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}/toggle`, {
         method: 'PATCH',
+        headers,
         credentials: 'include'
       });
       if (res.ok) {
@@ -169,6 +158,7 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
     try {
       await fetch(`${API}/tasks/${task.id}/subtasks/${subtaskId}`, {
         method: 'DELETE',
+        headers,
         credentials: 'include'
       });
       setSubtasks(prev => prev.filter(s => s.id !== subtaskId));
@@ -268,10 +258,10 @@ export default function TaskModal({ task, onSave, onClose, getHeaders }) {
             <label className="section-label">Priority</label>
             <div className="priority-selector">
               {[
-                { val: 'low', icon: '', label: 'Low' },
-                { val: 'medium', icon: '', label: 'Medium' },
-                { val: 'high', icon: '', label: 'High' },
-                { val: 'urgent', icon: '', label: 'Urgent' }
+                { val: 'low', icon: '○', label: 'Low' },
+                { val: 'medium', icon: '◐', label: 'Medium' },
+                { val: 'high', icon: '◉', label: 'High' },
+                { val: 'urgent', icon: '⚠', label: 'Urgent' }
               ].map(p => (
                 <button
                   key={p.val}

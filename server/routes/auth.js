@@ -19,21 +19,21 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /**
  * POST /api/auth/guest — Create anonymous guest session
  */
-router.post('/guest', (req, res) => {
+router.post('/guest', async (req, res) => {
   try {
     const guestId = crypto.randomBytes(4).toString('hex');
     const username = `guest_${guestId}`;
     const email = `${username}@guest.local`;
     const password_hash = 'guest-no-password';
 
-    const result = db.prepare(
+    const result = await db.prepare(
       'INSERT INTO users (username, email, password_hash, is_guest) VALUES (?, ?, ?, 1)'
     ).run(username, email, password_hash);
 
-    const user = db.prepare('SELECT id, username, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+    const user = await db.prepare('SELECT id, username, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
 
     // Create default project for guest
-    db.prepare('INSERT INTO projects (name, color, user_id) VALUES (?, ?, ?)').run('My Project', '#0ea5e9', user.id);
+    await db.prepare('INSERT INTO projects (name, color, user_id) VALUES (?, ?, ?)').run('My Project', '#0ea5e9', user.id);
 
     // Generate JWT — same as regular login
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
@@ -80,7 +80,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Check uniqueness
-    const existing = db.prepare(
+    const existing = await db.prepare(
       'SELECT id FROM users WHERE username = ? OR email = ?'
     ).get(username.trim().toLowerCase(), email.trim().toLowerCase());
     if (existing) {
@@ -91,14 +91,14 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(12);
     const password_hash = await bcrypt.hash(password, salt);
 
-    const result = db.prepare(
+    const result = await db.prepare(
       'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)'
     ).run(username.trim().toLowerCase(), email.trim().toLowerCase(), password_hash);
 
-    const user = db.prepare('SELECT id, username, email, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+    const user = await db.prepare('SELECT id, username, email, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
 
     // Create a default project for new user
-    db.prepare('INSERT INTO projects (name, color, user_id) VALUES (?, ?, ?)').run('My Project', '#0ea5e9', user.id);
+    await db.prepare('INSERT INTO projects (name, color, user_id) VALUES (?, ?, ?)').run('My Project', '#0ea5e9', user.id);
 
     // Generate token
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
@@ -129,7 +129,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user (by username or email)
-    const user = db.prepare(
+    const user = await db.prepare(
       'SELECT * FROM users WHERE username = ? OR email = ?'
     ).get(username.trim().toLowerCase(), username.trim().toLowerCase());
 
@@ -177,11 +177,11 @@ router.post('/logout', (req, res) => {
 /**
  * GET /api/auth/me — Get current authenticated user
  */
-router.get('/me', requireAuth, (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   try {
-    const user = db.prepare('SELECT id, username, email, created_at FROM users WHERE id = ?').get(req.user.id);
+    const user = await db.prepare('SELECT id, username, email, created_at FROM users WHERE id = ?').get(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    const isGuest = db.prepare('SELECT is_guest FROM users WHERE id = ?').get(req.user.id);
+    const isGuest = await db.prepare('SELECT is_guest FROM users WHERE id = ?').get(req.user.id);
     res.json({ ...user, is_guest: isGuest?.is_guest === 1 });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -205,7 +205,7 @@ router.put('/password', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'New password must be different from current password' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Verify current password
@@ -217,7 +217,7 @@ router.put('/password', requireAuth, async (req, res) => {
     // Hash and save new password
     const salt = await bcrypt.genSalt(12);
     const newHash = await bcrypt.hash(newPassword, salt);
-    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
+    await db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
 
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
@@ -233,7 +233,7 @@ router.delete('/account', requireAuth, async (req, res) => {
   try {
     const { password } = req.body;
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Guest accounts don't need password confirmation
@@ -248,7 +248,7 @@ router.delete('/account', requireAuth, async (req, res) => {
     }
 
     // Delete user — CASCADE rules handle tasks, projects, comments, activity
-    db.prepare('DELETE FROM users WHERE id = ?').run(req.user.id);
+    await db.prepare('DELETE FROM users WHERE id = ?').run(req.user.id);
 
     // Clear auth cookie
     res.clearCookie('taskflow_token', {

@@ -43,25 +43,19 @@ router.get('/reminders', async (req, res) => {
     let overdueTasks, todayTasks;
 
     if (typeof db.prepare === 'function') {
-      const prepOverdue = db.prepare(`
+      overdueTasks = await db.prepare(`
         SELECT t.*, u.email, u.username FROM tasks t
         LEFT JOIN users u ON t.user_id = u.id
         WHERE t.due_date < ? AND t.status != 'done' AND u.email IS NOT NULL AND u.is_guest = 0
         ORDER BY t.due_date ASC
-      `);
-      overdueTasks = typeof prepOverdue.all === 'function' && prepOverdue.all.constructor.name === 'AsyncFunction'
-        ? await prepOverdue.all(today)
-        : prepOverdue.all(today);
+      `).all(today);
 
-      const prepToday = db.prepare(`
+      todayTasks = await db.prepare(`
         SELECT t.*, u.email, u.username FROM tasks t
         LEFT JOIN users u ON t.user_id = u.id
         WHERE t.due_date = ? AND t.status != 'done' AND u.email IS NOT NULL AND u.is_guest = 0
         ORDER BY t.priority DESC
-      `);
-      todayTasks = typeof prepToday.all === 'function' && prepToday.all.constructor.name === 'AsyncFunction'
-        ? await prepToday.all(today)
-        : prepToday.all(today);
+      `).all(today);
     }
 
     // Group by user email
