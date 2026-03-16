@@ -173,6 +173,15 @@ router.post('/', async (req, res) => {
 
     const userId = req.user?.id || null;
 
+    // Resolve project: use provided, or find user's first project, or null
+    let resolvedProjectId = project_id || null;
+    if (!resolvedProjectId && userId) {
+      const userProject = await db.prepare(
+        'SELECT id FROM projects WHERE user_id = ? ORDER BY id ASC LIMIT 1'
+      ).get(userId);
+      resolvedProjectId = userProject?.id || null;
+    }
+
     const result = await db.prepare(`
       INSERT INTO tasks (title, description, status, priority, label, due_date, project_id, position, user_id, recurrence_rule)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -183,7 +192,7 @@ router.post('/', async (req, res) => {
       priority || 'medium',
       (label || '').trim(),
       due_date || null,
-      project_id || 1,
+      resolvedProjectId,
       maxPos.max + 1,
       userId,
       recurrence_rule || null

@@ -224,7 +224,7 @@ export default function App() {
     try {
       const method = form.id ? 'PUT' : 'POST';
       const url = form.id ? `${API}/tasks/${form.id}` : `${API}/tasks`;
-      const body = { ...form, project_id: currentProject || 1 };
+      const body = { ...form, project_id: currentProject || null };
       const res = await fetch(url, {
         method, headers: getHeaders(), credentials: 'include', body: JSON.stringify(body)
       });
