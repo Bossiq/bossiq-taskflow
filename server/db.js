@@ -10,7 +10,7 @@
  * @module server/db
  */
 
-// better-sqlite3 is imported dynamically below only when needed (no DATABASE_URL)
+import Database from 'better-sqlite3';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync } from 'fs';
@@ -103,7 +103,6 @@ if (USE_PG) {
 
 } else {
   // ── SQLite (development) ──
-  const { default: Database } = await import('better-sqlite3');
   const dbDir = join(__dirname, 'data');
   mkdirSync(dbDir, { recursive: true });
 
