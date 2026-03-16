@@ -1352,7 +1352,7 @@ input[type="date"].form-input {
 
 .sidebar-shortcut {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-align: center;
 }
 

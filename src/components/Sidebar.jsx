@@ -65,6 +65,7 @@ export default function Sidebar({ view, setView, projects, currentProject, setCu
               className="btn-add-project"
               onClick={() => setShowNewProject(!showNewProject)}
               title="New project"
+              aria-label={showNewProject ? 'Cancel new project' : 'Create new project'}
             >
               {showNewProject ? <X size={14} /> : <Plus size={14} />}
             </button>

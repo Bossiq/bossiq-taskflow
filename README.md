@@ -4,7 +4,7 @@ A production-grade, enterprise-ready Kanban task management application built wi
 
 🔗 **[Live Demo → bossiq-taskflow.vercel.app](https://bossiq-taskflow.vercel.app)**
 
-![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-20+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black) ![Tests](https://img.shields.io/badge/tests-106_passing-brightgreen)
+![MIT License](https://img.shields.io/badge/license-MIT-blue) ![Node.js](https://img.shields.io/badge/node-20+-green) ![React](https://img.shields.io/badge/react-18-blue) ![CI](https://github.com/Bossiq/bossiq-taskflow/actions/workflows/ci.yml/badge.svg) ![Vercel](https://img.shields.io/badge/deployed-vercel-black) ![Tests](https://img.shields.io/badge/tests-121_passing-brightgreen)
 
 <p align="center">
   <img src="docs/screenshot.png" width="49%" alt="TaskFlow Dark Mode Board"/>
@@ -63,9 +63,42 @@ A production-grade, enterprise-ready Kanban task management application built wi
 | Database | SQLite via better-sqlite3 (WAL mode) |
 | Security | Helmet, express-rate-limit, compression, bcryptjs, jsonwebtoken |
 | Testing | Vitest, React Testing Library, Supertest |
-| CI/CD | GitHub Actions (Node 18 + 20 matrix) |
+| CI/CD | GitHub Actions (Node 20 + 22 matrix) |
 | Hosting | Vercel (frontend) + Render (backend) |
 | Font | Inter (Google Fonts) |
+
+## 🏗️ Architecture
+
+```mermaid
+graph LR
+    subgraph Frontend ["Frontend (Vercel)"]
+        A["React 18 SPA"]
+        B["Vite Dev Server"]
+    end
+
+    subgraph Backend ["Backend (Render)"]
+        C["Express API"]
+        D["Socket.IO"]
+        E["Auth Middleware"]
+        F["Rate Limiter"]
+    end
+
+    subgraph Database
+        G["SQLite (dev)"]
+        H["PostgreSQL (prod)"]
+    end
+
+    A -->|REST API| C
+    A <-->|WebSocket| D
+    C --> E
+    C --> F
+    C -->|Dev| G
+    C -->|Prod| H
+
+    style Frontend fill:#0ea5e9,color:#fff,stroke:#0284c7
+    style Backend fill:#1e293b,color:#fff,stroke:#334155
+    style Database fill:#059669,color:#fff,stroke:#047857
+```
 
 ## 🚀 Quick Start
 
@@ -215,7 +248,7 @@ See [`.env.example`](.env.example) for all available variables.
 
 ## 🧪 Testing
 
-106 tests across 5 suites covering frontend components, backend API, and stress tests:
+121 tests across 6 suites covering frontend components, backend API, E2E flows, and stress tests:
 
 ```bash
 npm test              # Run all tests
@@ -225,6 +258,7 @@ npm run test:watch    # Watch mode
 | Suite | Tests | Coverage |
 |---|---|---|
 | Backend API | 47 | Health, 404, task CRUD, project CRUD, subtask CRUD, auth, comments, reorder |
+| E2E Lifecycle | 15 | Register → create → edit → subtask → comment → move → done → recurring → delete → account deletion, guest isolation |
 | Stress Tests | 40 | Concurrent operations, rate limiting, payload limits, edge cases |
 | Board | 6 | Columns, sorting, empty states, ARIA |
 | TaskCard | 8 | Render, overdue, draggable, description |

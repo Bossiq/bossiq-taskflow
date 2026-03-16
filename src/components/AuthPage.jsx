@@ -228,7 +228,7 @@ export default function AuthPage({ onAuth }) {
                 style={{ paddingRight: 48 }}
               />
               <label htmlFor="auth-password">Password</label>
-              <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
+              <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1} aria-label="Toggle password visibility">
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
