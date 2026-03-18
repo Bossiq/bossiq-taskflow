@@ -493,7 +493,28 @@ export default function App() {
   }, [tasks]);
 
   // ── Auth gate ──
-  if (!authChecked) return null;
+  if (!authChecked) {
+    return (
+      <div className="app-loading" role="status" aria-label="Loading application">
+        <div className="skeleton-board">
+          {['To Do', 'In Progress', 'Done'].map(col => (
+            <div key={col} className="skeleton-column">
+              <div className="skeleton-header" />
+              <div className="skeleton-card" />
+              <div className="skeleton-card short" />
+            </div>
+          ))}
+        </div>
+        <p className="loading-text">Loading TaskFlow...</p>
+        {coldStartMsg && (
+          <div className="cold-start-notice">
+            <span>⌛</span>
+            <p>The server is waking up — this usually takes 15-30 seconds on the first visit. Hang tight!</p>
+          </div>
+        )}
+      </div>
+    );
+  }
   if (!authResolved) {
     return <AuthPage onAuth={handleAuth} />;
   }

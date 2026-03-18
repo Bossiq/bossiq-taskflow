@@ -133,6 +133,8 @@ taskflow/
 │   ├── main.jsx                # React entry (wrapped in ErrorBoundary)
 │   ├── App.jsx                 # Main app shell + state management
 │   ├── index.css               # Design system (2700+ lines)
+│   ├── hooks/
+│   │   └── useSocket.js        # Socket.IO client hook for real-time sync
 │   └── components/
 │       ├── Board.jsx           # Kanban board (ARIA regions, drag-and-drop)
 │       ├── TaskCard.jsx        # Task card (progress bar, timeAgo, drag)
@@ -140,27 +142,35 @@ taskflow/
 │       ├── Sidebar.jsx         # Navigation + project management
 │       ├── Dashboard.jsx       # Interactive overview, stats, quick actions
 │       ├── Calendar.jsx        # Monthly calendar view with task dots
+│       ├── Gantt.jsx           # Gantt chart timeline with zoom + status grouping
 │       ├── AuthPage.jsx        # Login/register with glassmorphism UI
+│       ├── NotificationBell.jsx # Notification center with unread badge
 │       ├── ConfirmDialog.jsx   # Confirmation dialog (role=alertdialog)
 │       ├── Toast.jsx           # Toast notifications (auto-dismiss)
 │       ├── ErrorBoundary.jsx   # React error catcher with retry
 │       └── __tests__/          # Component tests (Board, TaskCard, Toast)
 └── server/
-    ├── index.js                # Express entry point
+    ├── index.js                # Express entry point + Socket.IO
     ├── app.js                  # Express app config (Helmet, rate limit, compression)
-    ├── db.js                   # SQLite setup + schema (users, projects, tasks, subtasks, comments, activity)
+    ├── db.js                   # SQLite setup + schema + migrations
+    ├── db-postgres.js          # PostgreSQL adapter (auto-selected via DATABASE_URL)
     ├── middleware/
     │   ├── auth.js              # JWT authentication middleware (require/optional)
-    │   └── sanitize.js         # XSS sanitization middleware
+    │   └── sanitize.js         # XSS sanitization middleware (3-layer)
     ├── routes/
-    │   ├── auth.js              # Auth API (register, login, /me)
-    │   ├── tasks.js            # Task CRUD API (move, batch, reorder, stats)
+    │   ├── auth.js              # Auth API (register, login, guest, password, account)
+    │   ├── tasks.js            # Task CRUD API (move, batch, reorder, templates, recurring)
     │   ├── projects.js         # Project CRUD API (user-scoped)
     │   ├── subtasks.js         # Subtask CRUD API (create, toggle, update, delete)
     │   ├── comments.js         # Comment CRUD API (add, list, delete)
-    │   └── activity.js         # Activity feed + streak API
+    │   ├── activity.js         # Activity feed + streak API
+    │   └── notifications.js   # Due-date notification endpoints
+    ├── services/
+    │   └── email.js            # SMTP email service (branded HTML templates)
     └── __tests__/
-        └── api.test.js         # 47 backend API tests + 40 stress tests (Supertest)
+        ├── api.test.js         # 47 core API tests
+        ├── e2e.test.js         # 15 end-to-end lifecycle tests
+        └── stress.test.js      # 40 security + stress tests
 ```
 
 ## 🔒 Security Features
@@ -232,7 +242,7 @@ taskflow/
 | `npm run dev:server` | Start Express API with nodemon (hot reload) |
 | `npm start` | Start Express API for production |
 | `npm run build` | Build frontend for production |
-| `npm test` | Run all 106 tests |
+| `npm test` | Run all 121 tests |
 | `npm run test:watch` | Run tests in watch mode |
 
 ## ⚙️ Environment Variables
